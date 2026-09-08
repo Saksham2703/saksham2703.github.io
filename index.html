@@ -23,78 +23,33 @@ description: "I write low-level software for hardware that has to know where it 
 
   <p class="caveat"><b>What I won't claim:</b> at n=50, binomial noise on a proportion near 0.3 is about ±6.5 points, so 34% vs. my diffusion baseline's 30% is suggestive, not proven — and everything here ran at 250 epochs, half the reference training budget. The defensible claim is the one on the slider: <b>changing only the inference-time execution horizon moved the same checkpoint from 0% to 34%.</b> <a href="{{ '/notes/' | relative_url }}">The full write-up is in my notes.</a></p>
 </div></section>
-
 <section id="work"><div class="wrap">
-  <p class="eyebrow">Selected work</p>
-  <h2>Every project here has something you can run, watch, or read the source of.</h2>
-  <p class="lede">No screenshots standing in for demos. The badge on the right says what kind of artifact you get.</p>
+  <h2>Selected work</h2>
+  <p class="lede">Every project here has something you can run, watch, or read the source of — no screenshots standing in for demos. The badge on the right says what kind of artifact you get.</p>
 
   <div class="work">
+{%- for p in site.data.projects %}
     <div class="row">
       <div>
-        <h3>lerobot-il <span class="yr">2026 · solo</span></h3>
-        <div class="stage-tags"><span>Decide</span><span>Imitation learning</span><span>PyTorch</span></div>
+        <h3>{{ p.name }} <span class="yr">{{ p.meta }}</span></h3>
+        <div class="stage-tags">{% for t in p.tags %}<span>{{ t }}</span>{% endfor %}</div>
       </div>
-      <p>Two weeks from "what is behavioral cloning?" to root-causing an index-aliasing bug in Hugging Face's LeRobot sampler. Four policies trained from scratch on a rented A10, a fixed epoch budget across every run, and a failure taxonomy because one success number was hiding the behavior.
-        <br><span class="num">4 policies · 13 eval runs · 1 upstream bug</span></p>
-      <a class="artifact live" href="#pusht">Interactive ↑</a>
+      <p>{{ p.blurb }}{% if p.facts %}
+        <br><span class="num">{{ p.facts }}</span>{% endif %}</p>
+{%- assign cls = 'artifact' %}
+{%- if p.badge.kind %}{% assign cls = cls | append: ' ' | append: p.badge.kind %}{% endif %}
+{%- if p.badge.href %}
+      <a class="{{ cls }}" href="{{ p.badge.href }}">{{ p.badge.label }}</a>
+{%- else %}
+      <span class="{{ cls }}">{{ p.badge.label }}</span>
+{%- endif %}
     </div>
-
-    <div class="row">
-      <div>
-        <h3>EchoGlove <span class="yr">2026 · in progress</span></h3>
-        <div class="stage-tags"><span>Sense</span><span>ESP32-S3</span><span>Sensor fusion</span></div>
-      </div>
-      <p>A camera-free hand-tracking glove fusing MEMS ultrasonic time-of-flight, IR laser ToF and IMU. Bill of materials to firmware to a real-time 3D viewer, solo, under $500. First project where I own the whole stack — including the soldering iron, which I had never picked up.
-        <br><span class="num">Build log · phase specs · learnings</span></p>
-      <span class="artifact">Build log</span>
-    </div>
-
-    <div class="row">
-      <div>
-        <h3>LeviTap <span class="yr">2023 · MadHacks, 1st place</span></h3>
-        <div class="stage-tags"><span>Perceive</span><span>Act</span><span>MediaPipe</span></div>
-      </div>
-      <p>Control a computer with your hands and a stock 640×480 webcam — cursor, both clicks, scroll, and speech-to-text, six gestures decoded from 21 landmarks at 30fps. Built because a teammate's mum cut her finger cooking and couldn't use her laptop.
-        <br><span class="num">levitap.tech · macOS &amp; Windows installers</span></p>
-      <a class="artifact" href="https://github.com/Saksham2703/madHacks-2023">Source</a>
-    </div>
-
-    <div class="row">
-      <div>
-        <h3>Orion <span class="yr">2026 · Google × Qualcomm</span></h3>
-        <div class="stage-tags"><span>Decide</span><span>On-device LLM</span><span>Android</span></div>
-      </div>
-      <p>An on-device agentic framework for Android — "computer use" for a phone, with the model running locally. Built in 24 hours; the agent generalised past the scripted demo in front of the judges.
-        <br><span class="num">MIT licensed · open source</span></p>
-      <span class="artifact video">Demo video</span>
-    </div>
-
-    <div class="row">
-      <div>
-        <h3>Thermal person detection <span class="yr">2023 · WiNGS Lab, UW–Madison</span></h3>
-        <div class="stage-tags"><span>Perceive</span><span>YOLOv6</span><span>Thermal</span></div>
-      </div>
-      <p>Undergraduate researcher under Prof. Suman Banerjee, on an oversubscribed project: detecting people in thermal imagery for search in darkness and smoke, where visible-light cameras fail.
-        <br><span class="num">Teledyne FLIR dataset</span></p>
-      <span class="artifact video">Detection reel</span>
-    </div>
-
-    <div class="row">
-      <div>
-        <h3>Holos <span class="yr">2024 · CS 639 capstone</span></h3>
-        <div class="stage-tags"><span>XR</span><span>Quest 3</span><span>GPT-4</span></div>
-      </div>
-      <p>A VR anatomy environment for the Meta Quest 3: pull a skeleton apart with your hands, ask a question out loud, and get a spoken answer back. Three grab-interaction SDKs before one worked.
-        <br><span class="num">Team of 5 · companion React site</span></p>
-      <span class="artifact video">Demo</span>
-    </div>
+{%- endfor %}
   </div>
 </div></section>
 
 <section id="experience"><div class="wrap">
-  <p class="eyebrow">Experience</p>
-  <h2>Where I've worked.</h2>
+  <h2>Experience</h2>
 
   <div class="xp">
     <div class="job">
@@ -158,8 +113,8 @@ description: "I write low-level software for hardware that has to know where it 
 </div></section>
 
 <section id="patents"><div class="wrap">
-  <p class="eyebrow">Patents</p>
-  <h2>Two applications, from the network telemetry work at Aviz.</h2>
+  <h2>Patents</h2>
+  <p class="lede">Two applications, from the network telemetry work at Aviz.</p>
   <div class="patents">
     <div class="patent">
       <h3><a href="https://patents.justia.com/patent/20250148289">System and Method of LLM Training for Network State Conversational Analytics</a></h3>
@@ -173,7 +128,7 @@ description: "I write low-level software for hardware that has to know where it 
 </div></section>
 
 <section id="education"><div class="wrap">
-  <p class="eyebrow">Education</p>
+  <h2>Education</h2>
   <div class="edu">
     <div>
       <h3>University of Wisconsin–Madison</h3>

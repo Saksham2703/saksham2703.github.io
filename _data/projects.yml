@@ -1,0 +1,86 @@
+# Selected work, rendered by the loop in index.html.
+# To add a project, append an entry here — no markup to touch.
+#
+#   name   project title
+#   meta   the small mono line beside the title (year · context)
+#   tags   chips under the title; keep to three
+#   blurb  the description paragraph
+#   facts  optional mono line under the blurb
+#   badge  label, plus:
+#            kind  live (accent) | video (muted) | omit for default
+#            href  omit to render a non-clickable badge
+
+- name: lerobot-il
+  meta: 2026 · solo
+  tags: [Decide, Imitation learning, PyTorch]
+  blurb: >-
+    Two weeks from "what is behavioral cloning?" to root-causing an index-aliasing
+    bug in Hugging Face's LeRobot sampler. Four policies trained from scratch on a
+    rented A10, a fixed epoch budget across every run, and a failure taxonomy
+    because one success number was hiding the behavior.
+  facts: 4 policies · 13 eval runs · 1 upstream bug
+  badge:
+    label: Interactive ↑
+    kind: live
+    href: "#pusht"
+
+- name: EchoGlove
+  meta: 2026 · in progress
+  tags: [Sense, ESP32-S3, Sensor fusion]
+  blurb: >-
+    A camera-free hand-tracking glove fusing MEMS ultrasonic time-of-flight, IR
+    laser ToF and IMU. Bill of materials to firmware to a real-time 3D viewer,
+    solo, under $500. First project where I own the whole stack — including the
+    soldering iron, which I had never picked up.
+  facts: Build log · phase specs · learnings
+  badge:
+    label: Build log
+
+- name: LeviTap
+  meta: 2023 · MadHacks, 1st place
+  tags: [Perceive, Act, MediaPipe]
+  blurb: >-
+    Control a computer with your hands and a stock 640×480 webcam — cursor, both
+    clicks, scroll, and speech-to-text, six gestures decoded from 21 landmarks at
+    30fps. Built because a teammate's mum cut her finger cooking and couldn't use
+    her laptop.
+  facts: levitap.tech · macOS &amp; Windows installers
+  badge:
+    label: Source
+    href: https://github.com/Saksham2703/madHacks-2023
+
+- name: Orion
+  meta: 2026 · Google × Qualcomm
+  tags: [Decide, On-device LLM, Android]
+  blurb: >-
+    An on-device agentic framework for Android — "computer use" for a phone, with
+    the model running locally. Built in 24 hours; the agent generalised past the
+    scripted demo in front of the judges.
+  facts: MIT licensed · open source
+  badge:
+    label: Demo video
+    kind: video
+
+- name: Thermal person detection
+  meta: 2023 · WiNGS Lab, UW–Madison
+  tags: [Perceive, YOLOv6, Thermal]
+  blurb: >-
+    Undergraduate researcher under Prof. Suman Banerjee, on an oversubscribed
+    project: detecting people in thermal imagery for search in darkness and smoke,
+    where visible-light cameras fail.
+  facts: Teledyne FLIR dataset
+  badge:
+    label: Detection reel
+    kind: video
+
+- name: Holos
+  meta: 2024 · CS 639 capstone
+  tags: [XR, Quest 3, GPT-4]
+  blurb: >-
+    A VR anatomy environment for the Meta Quest 3: pull a skeleton apart with your
+    hands, ask a question out loud, and get a spoken answer back. Three
+    grab-interaction SDKs before one worked.
+  facts: Team of 5 · companion React site
+  badge:
+    label: Demo
+    kind: video
