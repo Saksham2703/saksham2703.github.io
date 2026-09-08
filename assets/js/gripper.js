@@ -9,16 +9,18 @@ const stateEl = cell.querySelector('[data-cell-state]');
 // ---------- constants ----------
 const SHOULDER_Y = 0.55;              // shoulder height above the floor
 const FLOOR_Y = 0.9;               // lifts the rig clear of the caption strip
-const TOOL_R = 1.15;                  // wrist → fingertip, plus lateral finger spread when open
+// jaw = centre-to-centre finger spacing; fingers are FINGER_W wide, so closed means touching.
+const FINGER_W = 0.18;
+const JAW = { closed: FINGER_W + 0.02, relaxed: 0.35, open: 0.85 };
+// radius from the wrist origin to the farthest finger corner (tip plane 0.725 + 0.35, lateral spread at JAW.open, half-depth 0.2)
+const TOOL_R = Math.hypot(JAW.open / 2 + FINGER_W / 2, 0.725 + 0.35, 0.2);
 const ENVELOPE = REACH + TOOL_R;      // farthest any geometry gets from the shoulder
-const FRAME_PAD = 1.04;               // geometry sits at z ≤ +0.25, so it is magnified ~1% vs the z = 0 plane
+const FRAME_PAD = 1.04;               // geometry near the reach limit sits at z ≤ +0.25, so it is magnified ~1% vs the z = 0 plane
+// NOTE: this frames the envelope's bounding box; in a tall column that leaves headroom above the arm. Revisit once the tracked workspace is known.
 const SCENE_W = 2 * ENVELOPE * FRAME_PAD;                            // min visible width
 const MIN_VIS_H = (FLOOR_Y + SHOULDER_Y + ENVELOPE) * FRAME_PAD;      // min visible height
 const BASE_H = 0.25;
 const REST = { t1: THREE.MathUtils.degToRad(100), t2: THREE.MathUtils.degToRad(-70) };
-// jaw = centre-to-centre finger spacing; fingers are FINGER_W wide, so closed means touching.
-const FINGER_W = 0.18;
-const JAW = { closed: FINGER_W + 0.02, relaxed: 0.35, open: 0.85 };
 const COLORS = {
   body: 0xefebe0, joint: 0xd9d2c0, edge: 0x8b8577, path: 0x2b6555,
 };
@@ -60,6 +62,7 @@ function resize() {
   const dist = (visW / 2) / (aspect * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
   camera.position.set(0, visH / 2, dist);
   camera.lookAt(0, visH / 2, 0);
+  camera.far = dist + SCENE_W;
   camera.updateProjectionMatrix();
 }
 
@@ -132,18 +135,107 @@ function applyPose(t1, t2, wristRel, jaw) {
   fingerR.position.x = jaw / 2;
 }
 
-// ---------- render on demand ----------
-let frameQueued = false;
-function requestFrame() {
-  if (frameQueued) return;
-  frameQueued = true;
-  requestAnimationFrame(() => { frameQueued = false; renderer.render(scene, camera); });
+// ---------- coordinate mapping (client px → scene units, shoulder-relative) ----------
+function toScene(cx, cy) {
+  const r = canvas.getBoundingClientRect();
+  const x = ((cx - r.left) / r.width) * visW - visW / 2;
+  const y = ((r.bottom - cy) / r.height) * visH - FLOOR_Y - SHOULDER_Y;
+  return { x, y };
 }
 
+// ---------- state ----------
+const S = { IDLE: 'idle', TRACKING: 'tracking', PLANNING: 'planning', REACHING: 'reaching', GRASP: 'grasp' };
+let state = S.IDLE;
+function setState(s) { state = s; if (stateEl) stateEl.textContent = s; }
+
+const cur = { t1: REST.t1, t2: REST.t2, w: 0, jaw: JAW.relaxed };
+const goal = { t1: REST.t1, t2: REST.t2, w: 0, jaw: JAW.relaxed };
+let lambda = 8;             // smoothing rate: 8 tracking, 5 settling to rest, 14 reach, 30 grasp
+let elbowSign = -1;
+let cursor = null;          // last cursor in shoulder-relative scene units, or null when off-page
+let sleeping = false;       // stillness timer fired; stop the loop once converged
+let stillTimer = 0;
+const STILL_MS = 2000;
+
+const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));      // into (-π, π]
+const nearest = (a, ref) => ref + wrap(a - ref);               // equivalent of a closest to ref, so damping never takes the long way round
+
+function aimAt(p) {
+  // hysteresis on the elbow side so a cursor near x = 0 does not flap
+  if (p.x > 0.4) elbowSign = -1; else if (p.x < -0.4) elbowSign = 1;
+  const ik = solveIK(p.x, p.y, elbowSign);
+  goal.t1 = ik.t1; goal.t2 = ik.t2;
+  // jaws face the bearing to the target: absolute palm angle = bearing, so wrist relative = bearing - (t1 + t2)
+  goal.w = wrap(Math.atan2(ik.y, ik.x) - (ik.t1 + ik.t2));
+  return ik;
+}
+
+function restPose() {
+  goal.t1 = REST.t1; goal.t2 = REST.t2; goal.w = 0; goal.jaw = JAW.relaxed;
+}
+
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- loop ----------
+let running = false, last = 0;
+function converged() {
+  return Math.abs(wrap(goal.t1 - cur.t1)) < 1e-3 && Math.abs(wrap(goal.t2 - cur.t2)) < 1e-3 &&
+         Math.abs(wrap(goal.w - cur.w)) < 1e-3 && Math.abs(goal.jaw - cur.jaw) < 1e-3 &&
+         pathMat.opacity < 1e-3;
+}
+function tick(now) {
+  const dt = Math.min(0.05, Math.max(0, (now - last) / 1000) || 0.016);
+  last = now;
+  step(dt);
+  cur.t1 = damp(cur.t1, nearest(goal.t1, cur.t1), lambda, dt);
+  cur.t2 = damp(cur.t2, nearest(goal.t2, cur.t2), lambda, dt);
+  cur.w = damp(cur.w, nearest(goal.w, cur.w), lambda, dt);
+  cur.jaw = damp(cur.jaw, goal.jaw, state === S.GRASP ? 30 : lambda, dt);
+  applyPose(cur.t1, cur.t2, cur.w, cur.jaw);
+  renderer.render(scene, camera);
+  if (sleeping && converged()) {
+    // Stop the loop. Only TRACKING becomes IDLE; a held hover target keeps
+    // its state so the next pointermove does not yank the arm off the link.
+    running = false;
+    if (state === S.TRACKING) setState(S.IDLE);
+    return;
+  }
+  requestAnimationFrame(tick);
+}
+function wake() {
+  sleeping = false;
+  clearTimeout(stillTimer);
+  stillTimer = setTimeout(() => { sleeping = true; }, STILL_MS);
+  if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
+}
+// step(dt) advances time-based states; the next task fills it in.
+function step(dt) { void dt; }
+
+// ---------- input ----------
+if (!reducedMotion) {
+  document.addEventListener('pointermove', (e) => {
+    cursor = toScene(e.clientX, e.clientY);
+    if (state === S.IDLE || state === S.TRACKING) { setState(S.TRACKING); lambda = 8; aimAt(cursor); goal.jaw = JAW.relaxed; }
+    wake();
+  });
+  // pointerleave on <html> fires when the pointer exits the viewport;
+  // on document it does not fire reliably in every browser.
+  document.documentElement.addEventListener('pointerleave', () => {
+    cursor = null;
+    if (state === S.TRACKING || state === S.IDLE) { lambda = 5; restPose(); }
+    wake();
+  });
+}
+
+// ---------- startup ----------
 applyPose(REST.t1, REST.t2, 0, JAW.relaxed);
 // The observer fires once on observe(), so the first frame is drawn at the real size.
-new ResizeObserver(() => { resize(); requestFrame(); }).observe(cell);
+// While the loop runs, tick() renders; otherwise draw one frame here.
+new ResizeObserver(() => {
+  if (!cell.clientWidth || !cell.clientHeight) return;
+  resize();
+  if (!running) renderer.render(scene, camera);
+}).observe(cell);
 
-// Behaviour is attached in the next tasks; keep these referenced so the
-// import list stays honest under a linter.
-void solveIK; void forward; void bezier; void easeInOut; void damp; void stateEl; void visW; void visH;
+// Referenced by the next task; keep the import list honest under a linter.
+void forward; void bezier; void easeInOut; void cursor;
