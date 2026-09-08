@@ -22,10 +22,16 @@
   if (hero) hero.classList.remove('hero--solo');
   var hint = document.querySelector('[data-hint]');
   if (hint) hint.hidden = false;
+  function degrade() {
+    cell.hidden = true;
+    if (hero) hero.classList.add('hero--solo');
+    if (hint) hint.hidden = true;
+  }
   function load() {
     var s = document.createElement('script');
     s.type = 'module';
     s.src = '{{ "/assets/js/gripper.js" | relative_url }}';
+    s.onerror = degrade;
     document.head.appendChild(s);
   }
   var idle = window.requestIdleCallback

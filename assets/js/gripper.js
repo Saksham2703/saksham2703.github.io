@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { L1, L2, solveIK, forward, bezier, easeInOut, damp } from './gripper-ik.js';
+import { L1, L2, REACH, solveIK, forward, bezier, easeInOut, damp } from './gripper-ik.js';
 
 const cell = document.querySelector('[data-cell]');
 const canvas = cell && cell.querySelector('[data-gripper-canvas]');
@@ -7,10 +7,13 @@ if (!canvas) throw new Error('gripper: no cell');
 const stateEl = cell.querySelector('[data-cell-state]');
 
 // ---------- constants ----------
-const SCENE_W = 10;                   // scene units across the cell
-const MIN_VIS_H = 7.2;                // never show less than this height, so the reach circle fits
 const SHOULDER_Y = 0.55;              // shoulder height above the floor
 const FLOOR_Y = 0.9;               // lifts the rig clear of the caption strip
+const TOOL_R = 1.15;                  // wrist → fingertip, plus lateral finger spread when open
+const ENVELOPE = REACH + TOOL_R;      // farthest any geometry gets from the shoulder
+const FRAME_PAD = 1.04;               // geometry sits at z ≤ +0.25, so it is magnified ~1% vs the z = 0 plane
+const SCENE_W = 2 * ENVELOPE * FRAME_PAD;                            // min visible width
+const MIN_VIS_H = (FLOOR_Y + SHOULDER_Y + ENVELOPE) * FRAME_PAD;      // min visible height
 const BASE_H = 0.25;
 const REST = { t1: THREE.MathUtils.degToRad(100), t2: THREE.MathUtils.degToRad(-70) };
 // jaw = centre-to-centre finger spacing; fingers are FINGER_W wide, so closed means touching.
@@ -65,10 +68,10 @@ const bodyMat = new THREE.MeshStandardMaterial({ color: COLORS.body, roughness: 
 const jointMat = new THREE.MeshStandardMaterial({ color: COLORS.joint, roughness: 0.92, metalness: 0 });
 const edgeMat = new THREE.LineBasicMaterial({ color: COLORS.edge, transparent: true, opacity: 0.7 });
 
-function part(geom, mat, x = 0, y = 0, z = 0, rz = 0) {
+function part(geom, mat, x = 0, y = 0, z = 0, rz = 0, edges = new THREE.EdgesGeometry(geom, 20)) {
   const g = new THREE.Group();
   const m = new THREE.Mesh(geom, mat);
-  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom, 20), edgeMat));
+  m.add(new THREE.LineSegments(edges, edgeMat));
   g.add(m);
   g.position.set(x, y, z);
   g.rotation.z = rz;
@@ -102,8 +105,9 @@ elbow.add(wrist);
 wrist.add(part(cyl(0.28, 0.5), jointMat).rotateX(Math.PI / 2));
 wrist.add(part(box(1.1, 0.35, 0.5), bodyMat, 0, 0.2));
 const fingerGeom = box(FINGER_W, 0.7, 0.4);
-const fingerL = part(fingerGeom, bodyMat, 0, 0.725);
-const fingerR = part(fingerGeom, bodyMat, 0, 0.725);
+const fingerEdges = new THREE.EdgesGeometry(fingerGeom, 20);
+const fingerL = part(fingerGeom, bodyMat, 0, 0.725, 0, 0, fingerEdges);
+const fingerR = part(fingerGeom, bodyMat, 0, 0.725, 0, 0, fingerEdges);
 wrist.add(fingerL, fingerR);
 
 // ---------- trajectory line ----------
@@ -136,9 +140,8 @@ function requestFrame() {
   requestAnimationFrame(() => { frameQueued = false; renderer.render(scene, camera); });
 }
 
-resize();
 applyPose(REST.t1, REST.t2, 0, JAW.relaxed);
-requestFrame();
+// The observer fires once on observe(), so the first frame is drawn at the real size.
 new ResizeObserver(() => { resize(); requestFrame(); }).observe(cell);
 
 // Behaviour is attached in the next tasks; keep these referenced so the
