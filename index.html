@@ -1,0 +1,25 @@
+---
+layout: default
+description: "I write low-level software for hardware that has to know where it is. Linux drivers, board bring-up and sensor pipelines at Rivet Industries; robot learning and a camera-free tracking glove on my own time."
+---
+
+<div class="wrap">
+  <div class="hero">
+    <div class="pipeline">
+      <span>Sense</span><i>→</i><span>Perceive</span><i>→</i><span>Decide</span><i>→</i><span>Act</span>
+    </div>
+    <h1>I write low-level software for hardware that has to <em>know where it is</em>.</h1>
+    <p>Two years of Linux drivers, board bring-up and multi-sensor tracking pipelines for AR glasses at <strong>Rivet Industries</strong>. Nights and weekends: teaching myself imitation learning, and soldering a hand-tracking glove that doesn't use cameras.</p>
+    <p>Below is a policy I trained failing, and then succeeding, because of one number I changed at inference time. Drag it yourself.</p>
+  </div>
+</div>
+
+<section id="pusht"><div class="wrap">
+  <p class="eyebrow">Imitation learning · lerobot-il</p>
+  <h2>The same checkpoint scores 0% or 34%, depending on how often it's allowed to look.</h2>
+  <p class="lede">I trained an ACT policy on the Push-T benchmark and my first evaluation came back at <strong>0.0% success</strong>. Instead of retraining, I watched the videos. The policy was committing to a 100-step action chunk open-loop — overshooting the goal and never re-observing in time to correct. <strong>The weights were fine. The library's default execution horizon wasn't.</strong></p>
+
+  {% include pusht-figure.html %}
+
+  <p class="caveat"><b>What I won't claim:</b> at n=50, binomial noise on a proportion near 0.3 is about ±6.5 points, so 34% vs. my diffusion baseline's 30% is suggestive, not proven — and everything here ran at 250 epochs, half the reference training budget. The defensible claim is the one on the slider: <b>changing only the inference-time execution horizon moved the same checkpoint from 0% to 34%.</b> <a href="{{ '/notes/' | relative_url }}">The full write-up is in my notes.</a></p>
+</div></section>
