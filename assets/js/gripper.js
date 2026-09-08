@@ -9,6 +9,7 @@ const stateEl = cell.querySelector('[data-cell-state]');
 // ---------- constants ----------
 const SCENE_W = 10;                   // scene units across the cell
 const SHOULDER_Y = 0.55;              // shoulder height above the floor
+const FLOOR_Y = 0.9;               // lifts the rig clear of the caption strip
 const REST = { t1: 1.75, t2: -1.22 }; // 100°, -70°
 const JAW = { closed: 0.15, relaxed: 0.35, open: 0.85 };
 const COLORS = {
@@ -20,10 +21,14 @@ const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true 
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 100);
-scene.add(new THREE.HemisphereLight(0xfffaf0, 0xd9d2c0, 0.9));
-const sun = new THREE.DirectionalLight(0xffffff, 0.55);
+scene.add(new THREE.HemisphereLight(0xfffaf0, 0xd9d2c0, 2.4));
+const sun = new THREE.DirectionalLight(0xffffff, 1.8);
 sun.position.set(-4, 8, 6);
 scene.add(sun);
+
+const rig = new THREE.Group();       // everything that stands on the floor
+rig.position.y = FLOOR_Y;
+scene.add(rig);
 
 let visH = SCENE_W; // visible scene height at z = 0; set by resize()
 function resize() {
@@ -59,13 +64,13 @@ const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
 
 // ---------- the arm: base → shoulder → link1 → elbow → link2 → wrist → palm → fingers ----------
 const base = part(cyl(0.9, 0.25), jointMat, 0, 0.125);
-scene.add(base);
+rig.add(base);
 const pedestal = part(box(0.6, SHOULDER_Y - 0.25, 0.6), bodyMat, 0, 0.25 + (SHOULDER_Y - 0.25) / 2);
-scene.add(pedestal);
+rig.add(pedestal);
 
 const shoulder = new THREE.Group();
 shoulder.position.set(0, SHOULDER_Y, 0);
-scene.add(shoulder);
+rig.add(shoulder);
 // joint cylinders lie along z so their round face looks at the viewer
 shoulder.add(part(cyl(0.35, 0.6), jointMat).rotateX(Math.PI / 2));
 shoulder.add(part(box(0.45, L1, 0.45), bodyMat, 0, L1 / 2));
@@ -92,7 +97,7 @@ pathGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PAT
 const pathMat = new THREE.LineDashedMaterial({ color: COLORS.path, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0 });
 const pathLine = new THREE.Line(pathGeom, pathMat);
 pathLine.position.y = SHOULDER_Y;
-scene.add(pathLine);
+rig.add(pathLine);
 
 // ---------- pose application ----------
 // Links are modelled along +y, so a shoulder angle of t1 (from +x) is a z-rotation of t1 - 90°.
