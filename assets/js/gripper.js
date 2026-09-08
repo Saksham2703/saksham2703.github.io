@@ -220,7 +220,7 @@ function plan(el) {
   const raw = elementPoint(el);
   elbowSign = raw.x > 0.4 ? -1 : raw.x < -0.4 ? 1 : elbowSign;
   retarget(el);
-  aimAt(path.p0); // holds the current pose; target is already set, so no sign flip is spent here
+  aimAt(path.p0); // hold position during the fade; if plan() flipped the elbow, that swing is spent here
   clock = 0; arrived = false;
   setState(S.PLANNING);
   wake();
@@ -354,10 +354,8 @@ new ResizeObserver(() => {
   resize();
   if (targetEl) {
     retarget(targetEl);
-    if (state === S.REACHING || state === S.GRASP) {
-      if (arrived) { aimAt(target); wake(); }
-      else { clock = 0; arrived = false; }
-    }
+    if (arrived) { aimAt(target); wake(); }                       // parked (possibly IDLE): move to the new spot
+    else if (state === S.REACHING || state === S.GRASP) { clock = 0; arrived = false; } // mid-reach: restart from here
   }
   if (!running) renderer.render(scene, camera);
 }).observe(cell);
