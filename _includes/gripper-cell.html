@@ -1,1 +1,30 @@
-{% comment %} Replaced in the hero-gripper branch. {% endcomment %}
+<div class="cell" data-cell aria-hidden="true">
+  <canvas data-gripper-canvas></canvas>
+  <div class="celltag">
+    <span>sim · 2-link planar arm · parallel jaw</span>
+    <span data-cell-state>idle</span>
+  </div>
+</div>
+<script>
+(function () {
+  var cell = document.querySelector('[data-cell]');
+  if (!cell) return;
+  var hero = cell.closest('.hero');
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    cell.hidden = true;
+    return;
+  }
+  if (hero) hero.classList.remove('hero--solo');
+  var hint = document.querySelector('[data-hint]');
+  if (hint) hint.hidden = false;
+  function load() {
+    var s = document.createElement('script');
+    s.type = 'module';
+    s.src = '{{ "/assets/js/gripper.js" | relative_url }}';
+    document.head.appendChild(s);
+  }
+  var idle = window.requestIdleCallback || function (f) { setTimeout(f, 0); };
+  if (document.readyState === 'complete') idle(load);
+  else addEventListener('load', function () { idle(load); });
+})();
+</script>
