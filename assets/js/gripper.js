@@ -146,7 +146,7 @@ function toScene(cx, cy) {
 // ---------- state ----------
 const S = { IDLE: 'idle', TRACKING: 'tracking', PLANNING: 'planning', REACHING: 'reaching', GRASP: 'grasp' };
 let state = S.IDLE;
-function setState(s) { state = s; if (stateEl) stateEl.textContent = s; }
+function setState(s) { if (s === state) return; state = s; if (stateEl) stateEl.textContent = s; }
 
 const cur = { t1: REST.t1, t2: REST.t2, w: 0, jaw: JAW.relaxed };
 const goal = { t1: REST.t1, t2: REST.t2, w: 0, jaw: JAW.relaxed };
@@ -176,8 +176,82 @@ function restPose() {
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// ---------- planning / reaching / grasp ----------
+const PLAN_MS = 120, REACH_MS = 350, FADE_MS = 200, PULSE_MS = 150, PATH_ALPHA = 0.85;
+let target = null;      // shoulder-relative scene point of the hovered element (clamped to reach)
+let targetEl = null;    // the element being targeted, so focus after pointerenter does not re-plan
+let path = null;        // { p0, p1, p2 }
+let clock = 0;          // ms elapsed in the current time-based state
+let arrived = false;
+
+function elementPoint(el) {
+  const r = el.getBoundingClientRect();
+  return toScene(r.left + r.width / 2, r.top + r.height / 2);
+}
+function writePath() {
+  const pos = pathGeom.attributes.position;
+  for (let i = 0; i < PATH_N; i++) {
+    const p = bezier(path.p0, path.p1, path.p2, i / (PATH_N - 1));
+    pos.setXYZ(i, p.x, p.y, 0.3);
+  }
+  pos.needsUpdate = true;
+  pathLine.computeLineDistances();
+}
+function plan(el) {
+  if (targetEl === el) return;
+  targetEl = el;
+  const raw = elementPoint(el);
+  const ik = solveIK(raw.x, raw.y, raw.x > 0.4 ? -1 : raw.x < -0.4 ? 1 : elbowSign);
+  target = { x: ik.x, y: ik.y };               // clamped to reach along the bearing
+  const p0 = forward(cur.t1, cur.t2);
+  const dx = target.x - p0.x, dy = target.y - p0.y;
+  // control point: chord midpoint pushed 25% of the chord length along the
+  // perpendicular (-dy, dx), on the side that keeps the elbow up
+  const side = target.x >= 0 ? 1 : -1;
+  const p1 = { x: (p0.x + target.x) / 2 - side * dy * 0.25, y: (p0.y + target.y) / 2 + side * dx * 0.25 };
+  path = { p0: { x: p0.x, y: p0.y }, p1, p2: target };
+  writePath();
+  clock = 0; arrived = false;
+  lambda = 14;
+  setState(S.PLANNING);
+  wake();
+}
+function release(el) {
+  if (el && targetEl !== el) return;
+  target = null; targetEl = null; path = null; arrived = false;
+  if (cursor) { lambda = 8; aimAt(cursor); }
+  else { lambda = 5; restPose(); }
+  goal.jaw = JAW.relaxed;
+  setState(S.TRACKING);
+  wake();
+}
+function grasp() { if (!target) return; goal.jaw = JAW.closed; setState(S.GRASP); wake(); }
+function ungrasp() { if (state === S.GRASP) { goal.jaw = JAW.open; setState(S.REACHING); wake(); } }
+
+function step(dt) {
+  const ms = dt * 1000;
+  if (state === S.PLANNING) {
+    clock += ms;
+    pathMat.opacity = Math.min(1, clock / PLAN_MS) * PATH_ALPHA;
+    if (clock >= PLAN_MS) { clock = 0; setState(S.REACHING); goal.jaw = JAW.open; }
+  } else if (state === S.REACHING || state === S.GRASP) {
+    clock += ms;
+    if (!arrived) {
+      const u = easeInOut(Math.min(1, clock / REACH_MS));
+      aimAt(bezier(path.p0, path.p1, path.p2, u));
+      if (u >= 1) { arrived = true; clock = 0; }
+    } else {
+      pathMat.opacity = Math.max(0, PATH_ALPHA * (1 - clock / FADE_MS));
+      aimAt(target);
+    }
+  } else if (pathMat.opacity > 0) {
+    pathMat.opacity = Math.max(0, pathMat.opacity - (ms / FADE_MS) * PATH_ALPHA);
+  }
+}
+
 // ---------- loop ----------
 let running = false, last = 0;
+let visible = true;
 function converged() {
   return Math.abs(wrap(goal.t1 - cur.t1)) < 1e-3 && Math.abs(wrap(goal.t2 - cur.t2)) < 1e-3 &&
          Math.abs(wrap(goal.w - cur.w)) < 1e-3 && Math.abs(goal.jaw - cur.jaw) < 1e-3 &&
@@ -193,44 +267,63 @@ function tick(now) {
   cur.jaw = damp(cur.jaw, goal.jaw, state === S.GRASP ? 30 : lambda, dt);
   applyPose(cur.t1, cur.t2, cur.w, cur.jaw);
   renderer.render(scene, camera);
-  if (sleeping && converged()) {
-    // Stop the loop. Only TRACKING becomes IDLE; a held hover target keeps
-    // its state so the next pointermove does not yank the arm off the link.
+  if (sleeping && (state === S.TRACKING || state === S.IDLE || (state === S.REACHING && arrived)) && converged()) {
+    // Stop the loop. Time-driven states (PLANNING, mid-REACH, GRASP) never stop here; a held
+    // hover target keeps `target` set so the next pointermove does not yank the arm off the link.
     running = false;
-    if (state === S.TRACKING) setState(S.IDLE);
+    if (state !== S.IDLE) setState(S.IDLE);
     return;
   }
   requestAnimationFrame(tick);
 }
+function start() {
+  if (!visible) return;
+  if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
+}
 function wake() {
+  if (!visible) return;
   sleeping = false;
   clearTimeout(stillTimer);
   stillTimer = setTimeout(() => { sleeping = true; }, STILL_MS);
-  if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
+  start();
 }
-// Like wake(), but with no stillness grace: the loop stops as soon as the pose converges.
+// No stillness grace: the loop stops as soon as the pose converges.
 function settle() {
-  wake();
   clearTimeout(stillTimer);
   sleeping = true;
+  start();
 }
-// step(dt) advances time-based states; the next task fills it in.
-function step(dt) { void dt; }
 
 // ---------- input ----------
 if (!reducedMotion) {
   document.addEventListener('pointermove', (e) => {
     cursor = toScene(e.clientX, e.clientY);
-    if (state === S.IDLE || state === S.TRACKING) { setState(S.TRACKING); lambda = 8; aimAt(cursor); goal.jaw = JAW.relaxed; }
+    if (!target && (state === S.IDLE || state === S.TRACKING)) { setState(S.TRACKING); lambda = 8; aimAt(cursor); goal.jaw = JAW.relaxed; }
     wake();
-  });
+  }, { passive: true });
   // pointerleave on <html> fires when the pointer exits the viewport;
   // on document it does not fire reliably in every browser.
   document.documentElement.addEventListener('pointerleave', () => {
     cursor = null;
-    if (state === S.TRACKING || state === S.IDLE) { lambda = 5; restPose(); }
-    settle();
+    if (!target && (state === S.TRACKING || state === S.IDLE)) { lambda = 5; restPose(); settle(); }
   });
+  document.addEventListener('pointerup', ungrasp);
+
+  document.querySelectorAll('[data-grasp]').forEach((el) => {
+    el.addEventListener('pointerenter', () => plan(el));
+    el.addEventListener('pointerleave', () => release(el));
+    el.addEventListener('pointerdown', grasp);
+    el.addEventListener('focus', () => plan(el));
+    el.addEventListener('blur', () => release(el));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { grasp(); setTimeout(ungrasp, PULSE_MS); }
+    });
+  });
+
+  // Pointer motion over a hero scrolled out of view must not restart an invisible loop.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible && state !== S.IDLE) start(); }).observe(cell);
+  }
 }
 
 // ---------- startup ----------
@@ -243,5 +336,3 @@ new ResizeObserver(() => {
   if (!running) renderer.render(scene, camera);
 }).observe(cell);
 
-// Referenced by the next task; keep the import list honest under a linter.
-void forward; void bezier; void easeInOut; void cursor;
