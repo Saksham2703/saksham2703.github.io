@@ -10,23 +10,15 @@
 (function () {
   var cell = document.querySelector('[data-cell]');
   if (!cell) return;
-  if (window.HTMLScriptElement && HTMLScriptElement.supports && !HTMLScriptElement.supports('importmap')) {
-    cell.hidden = true;
-    return;
-  }
   var hero = cell.closest('.hero');
-  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    cell.hidden = true;
-    return;
-  }
-  if (hero) hero.classList.remove('hero--solo');
   var hint = document.querySelector('[data-hint]');
-  if (hint) hint.hidden = false;
   function degrade() {
     cell.hidden = true;
     if (hero) hero.classList.add('hero--solo');
     if (hint) hint.hidden = true;
   }
+  if (window.HTMLScriptElement && HTMLScriptElement.supports && !HTMLScriptElement.supports('importmap')) { degrade(); return; }
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) { degrade(); return; }
   function load() {
     var s = document.createElement('script');
     s.type = 'module';

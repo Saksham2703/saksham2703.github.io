@@ -311,11 +311,14 @@ function settle() {
 
 // ---------- input ----------
 if (!reducedMotion) {
-  document.addEventListener('pointermove', (e) => {
-    cursor = toScene(e.clientX, e.clientY);
+  let px = 0, py = 0; // last client position, so a scroll can re-aim without a pointermove
+  const track = () => {
+    cursor = toScene(px, py);
     if (!target && (state === S.IDLE || state === S.TRACKING)) { setState(S.TRACKING); lambda = 8; aimAt(cursor); goal.jaw = JAW.relaxed; }
     wake();
-  }, { passive: true });
+  };
+  document.addEventListener('pointermove', (e) => { px = e.clientX; py = e.clientY; track(); }, { passive: true });
+  addEventListener('scroll', () => { if (cursor) track(); }, { passive: true });
   // pointerleave on <html> fires when the pointer exits the viewport;
   // on document it does not fire reliably in every browser.
   document.documentElement.addEventListener('pointerleave', () => {
