@@ -201,8 +201,8 @@ function writePath() {
   pathLine.computeLineDistances();
 }
 function retarget(el) {
+  // elbowSign is committed by plan() and held for the whole reach; a resize must not flip it
   const raw = elementPoint(el);
-  elbowSign = raw.x > 0.4 ? -1 : raw.x < -0.4 ? 1 : elbowSign;
   const ik = solveIK(raw.x, raw.y, elbowSign);
   target = { x: ik.x, y: ik.y };               // clamped to reach along the bearing
   const p0 = forward(cur.t1, cur.t2);
@@ -217,8 +217,10 @@ function retarget(el) {
 function plan(el) {
   if (targetEl === el) return;
   targetEl = el;
+  const raw = elementPoint(el);
+  elbowSign = raw.x > 0.4 ? -1 : raw.x < -0.4 ? 1 : elbowSign;
   retarget(el);
-  aimAt(path.p0);
+  aimAt(path.p0); // holds the current pose; target is already set, so no sign flip is spent here
   clock = 0; arrived = false;
   setState(S.PLANNING);
   wake();
@@ -232,7 +234,8 @@ function release(el) {
 }
 function grasp() {
   if (!target) return;
-  if (state === S.PLANNING) { clock = 0; lambda = 14; }
+  // interrupting the fade-in: jump straight to full opacity so the later arrival fade has no pop
+  if (state === S.PLANNING) { clock = 0; lambda = 14; pathMat.opacity = PATH_ALPHA; }
   goal.jaw = JAW.closed; setState(S.GRASP); wake();
 }
 function ungrasp() { if (state === S.GRASP) { goal.jaw = JAW.open; setState(S.REACHING); wake(); } }
@@ -276,11 +279,13 @@ function tick(now) {
   cur.jaw = damp(cur.jaw, goal.jaw, state === S.GRASP ? 30 : lambda, dt);
   applyPose(cur.t1, cur.t2, cur.w, cur.jaw);
   renderer.render(scene, camera);
-  if (sleeping && (state === S.TRACKING || state === S.IDLE || ((state === S.REACHING || state === S.GRASP) && arrived)) && converged()) {
+  const canStop = state === S.TRACKING || state === S.IDLE || ((state === S.REACHING || state === S.GRASP) && arrived);
+  if (sleeping && canStop && converged()) {
     // Stop the loop. Time-driven states (PLANNING, mid-REACH) never stop here; a held
     // hover target keeps `target` set so the next pointermove does not yank the arm off the link.
+    // GRASP keeps its label while stopped: jaws stay clamped and pointerup/Enter must still open them.
     running = false;
-    if (state !== S.IDLE) setState(S.IDLE);
+    if (state !== S.IDLE && state !== S.GRASP) setState(S.IDLE);
     return;
   }
   if (!visible) { running = false; return; }
@@ -318,10 +323,9 @@ if (!reducedMotion) {
     if (target) { release(targetEl); return; }
     if (state === S.TRACKING || state === S.IDLE) { lambda = 5; restPose(); settle(); }
   });
-  const onUngrasp = () => ungrasp();
-  document.addEventListener('pointerup', onUngrasp, { passive: true });
-  document.addEventListener('pointercancel', onUngrasp, { passive: true });
-  window.addEventListener('blur', onUngrasp);
+  document.addEventListener('pointerup', ungrasp);
+  document.addEventListener('pointercancel', ungrasp);
+  window.addEventListener('blur', ungrasp);
 
   document.querySelectorAll('[data-grasp]').forEach((el) => {
     el.addEventListener('pointerenter', () => plan(el));
@@ -331,7 +335,7 @@ if (!reducedMotion) {
     el.addEventListener('blur', () => release(el));
     el.addEventListener('keydown', (e) => {
       if (e.repeat) return;
-      if (e.key === 'Enter' || (e.key === ' ' && el.tagName === 'BUTTON')) { grasp(); setTimeout(ungrasp, PULSE_MS); }
+      if (e.key === 'Enter' || (e.key === ' ' && el.matches('button,[role="button"]'))) { grasp(); setTimeout(ungrasp, PULSE_MS); }
     });
   });
 
@@ -348,7 +352,13 @@ applyPose(REST.t1, REST.t2, 0, JAW.relaxed);
 new ResizeObserver(() => {
   if (!cell.clientWidth || !cell.clientHeight) return;
   resize();
-  if (targetEl) retarget(targetEl);
+  if (targetEl) {
+    retarget(targetEl);
+    if (state === S.REACHING || state === S.GRASP) {
+      if (arrived) { aimAt(target); wake(); }
+      else { clock = 0; arrived = false; }
+    }
+  }
   if (!running) renderer.render(scene, camera);
 }).observe(cell);
 
