@@ -1,0 +1,34 @@
+{
+  "episode": 28,
+  "n_eval_episodes": 50,
+  "binomial_noise_pts": 6.5,
+  "chart_max_pct": 40,
+  "default_index": 4,
+  "runs": [
+    {
+      "h": 5, "pc_success": 4.0, "ep_max_reward": 0.00, "state": "bad",
+      "label": "Over-corrects",
+      "text": "Replans every 5 actions — far more often than the chunk was trained to be executed. The pusher jitters against the block and never commits to a full push."
+    },
+    {
+      "h": 10, "pc_success": 22.0, "ep_max_reward": 0.99, "state": "ok",
+      "label": "Recovering",
+      "text": "Enough open-loop commitment to move the block, enough feedback to correct. On this episode it lands at 0.99 — a near-miss under the 0.95 coverage threshold."
+    },
+    {
+      "h": 20, "pc_success": 34.0, "ep_max_reward": 1.00, "state": "ok",
+      "label": "Peak",
+      "text": "The best setting I measured, and it beats my diffusion baseline's 30% on identical data and training budget. Same weights as the 0% run — only the replanning interval changed."
+    },
+    {
+      "h": 30, "pc_success": 12.0, "ep_max_reward": 0.92, "state": "ok",
+      "label": "Drifting",
+      "text": "Starting to overshoot. The block gets close to the goal pose and the policy is already committed to actions that carry it past."
+    },
+    {
+      "h": 100, "pc_success": 0.0, "ep_max_reward": 0.00, "state": "bad",
+      "label": "Library default",
+      "text": "Commits to all 100 predicted actions before looking again. It ploughs past the goal pose and has no chance to correct. Every one of the 50 episodes fails."
+    }
+  ]
+}
