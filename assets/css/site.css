@@ -4,11 +4,16 @@
   --line:#ded6c3; --line-2:#c8bea6;
   --accent:#2b6555; --accent-2:#3a8570; --accent-soft:#dee6da;
   --alarm:#9c3f1c; --alarm-soft:#f0dfd0;
+  --highlighter:rgba(255,224,102,.55);
   --shadow:0 1px 2px rgba(60,50,30,.06), 0 10px 28px -16px rgba(60,50,30,.30);
 }
 *{box-sizing:border-box}
 body{
-  background:var(--paper); color:var(--ink);
+  background-color:var(--paper); color:var(--ink);
+  background-image:
+    linear-gradient(rgba(43,101,85,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,101,85,.055) 1px, transparent 1px);
+  background-size:26px 26px;
   font-family:"Merriweather",Georgia,"Times New Roman",serif;
   font-size:17px; line-height:1.65; margin:0;
   -webkit-font-smoothing:antialiased;
@@ -236,3 +241,22 @@ article.note table th,article.note table td{border-bottom:1px solid var(--line);
 .edu{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:baseline}
 .edu h3{margin:0 0 6px; font-size:17.5px; font-weight:700; letter-spacing:-.008em}
 .edu .deg{color:var(--ink-2); font-size:16.5px}
+
+/* --- theme refresh: highlighter swipe, hint --- */
+.hero p a, .lede a, .caveat a, article.note p a, .patent h3 a, .cta a{
+  color:inherit; text-decoration:none;
+  background-image:linear-gradient(100deg, transparent .8%, var(--highlighter) 2.5%, var(--highlighter) 97.5%, transparent 99.2%);
+  background-repeat:no-repeat; background-size:0% 88%; background-position:0 55%;
+  transition:background-size .35s ease; border-radius:2px;
+  border-bottom:1px solid var(--line-2);
+}
+.hero p a:hover, .lede a:hover, .caveat a:hover, article.note p a:hover, .patent h3 a:hover, .cta a:hover,
+.hero p a:focus-visible, .lede a:focus-visible, .caveat a:focus-visible, article.note p a:focus-visible, .patent h3 a:focus-visible, .cta a:focus-visible{
+  background-size:100% 88%; border-bottom-color:var(--ink);
+}
+.patent h3 a{color:var(--accent); border-bottom-color:var(--accent-soft)}
+
+.hint{
+  font-family:"JetBrains Mono",monospace; font-size:11.5px; letter-spacing:.02em;
+  color:var(--ink-3); margin:14px 0 0;
+}
