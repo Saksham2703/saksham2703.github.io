@@ -144,7 +144,7 @@ svg.sweep text{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabu
 
 .work{display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
 .row{
-  display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) auto;
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 150px;
   gap:26px; align-items:start; padding:24px 0; border-bottom:1px solid var(--line);
 }
 .row h3{margin:0 0 5px; font-size:20px; font-weight:700; letter-spacing:-.015em}
@@ -156,6 +156,7 @@ svg.sweep text{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabu
 }
 .row p{margin:0; font-size:16.5px; color:var(--ink-2); line-height:1.5}
 .row .num{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--ink); font-variant-numeric:tabular-nums}
+.row > .artifact{justify-self:end}
 .artifact{
   white-space:nowrap; font-family:"JetBrains Mono",monospace; font-size:10.5px;
   letter-spacing:.08em; text-transform:uppercase; padding:5px 10px; border-radius:3px;
@@ -215,7 +216,7 @@ article.note table th,article.note table td{border-bottom:1px solid var(--line);
 .xp{display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
 .xp .job{padding:24px 0; border-bottom:1px solid var(--line)}
 .xp .jobhead{display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; align-items:baseline; margin-bottom:9px}
-.xp h3{margin:0; font-size:19px; font-weight:700; letter-spacing:-.012em}
+.xp h3{margin:0 0 3px; font-size:19px; font-weight:700; letter-spacing:-.012em}
 .xp .role{color:var(--ink-2); font-size:16.5px}
 .xp .when{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--ink-3); white-space:nowrap}
 .xp ul{margin:0; padding-left:19px; color:var(--ink-2); font-size:16.5px; line-height:1.55}
