@@ -1,0 +1,22 @@
+title: Saksham Jain
+tagline: Low-level software for hardware that has to know where it is
+email: sakshamjain2703@gmail.com
+github_username: Saksham2703
+linkedin: https://www.linkedin.com/in/saksham-jain-978189239/
+url: "https://saksham2703.github.io"
+baseurl: ""
+
+permalink: /notes/:title/
+markdown: kramdown
+plugins:
+  - jekyll-feed
+
+defaults:
+  - scope: { path: "", type: "posts" }
+    values: { layout: "note" }
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - README.md
