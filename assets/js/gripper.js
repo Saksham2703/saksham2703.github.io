@@ -208,6 +208,12 @@ function wake() {
   stillTimer = setTimeout(() => { sleeping = true; }, STILL_MS);
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
 }
+// Like wake(), but with no stillness grace: the loop stops as soon as the pose converges.
+function settle() {
+  wake();
+  clearTimeout(stillTimer);
+  sleeping = true;
+}
 // step(dt) advances time-based states; the next task fills it in.
 function step(dt) { void dt; }
 
@@ -223,7 +229,7 @@ if (!reducedMotion) {
   document.documentElement.addEventListener('pointerleave', () => {
     cursor = null;
     if (state === S.TRACKING || state === S.IDLE) { lambda = 5; restPose(); }
-    wake();
+    settle();
   });
 }
 
