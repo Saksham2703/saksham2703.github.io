@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { L1, L2, solveIK, forward, bezier, easeInOut, damp } from './gripper-ik.js';
+import { L1, L2, REACH, MIN_REACH, solveIK, forward, bezier, easeInOut, damp } from './gripper-ik.js';
 
 const close = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 
@@ -17,7 +17,7 @@ const close = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
   const s = solveIK(40, 30, -1);
   const p = forward(s.t1, s.t2);
   const r = Math.hypot(p.x, p.y);
-  assert.ok(close(r, L1 + L2 - 0.01, 1e-6), `clamped radius ${r}`);
+  assert.ok(close(r, REACH, 1e-6), `clamped radius ${r}`);
   assert.ok(close(Math.atan2(p.y, p.x), Math.atan2(30, 40), 1e-6));
   assert.equal(s.clamped, true);
 }
@@ -34,6 +34,23 @@ const close = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 {
   const s = solveIK(0, 0, -1);
   assert.ok(Number.isFinite(s.t1) && Number.isFinite(s.t2));
+}
+
+// Non-finite input falls back to the same safe pose instead of NaN.
+{
+  for (const [x, y] of [[NaN, 1], [Infinity, 1], [1, -Infinity]]) {
+    const s = solveIK(x, y, -1);
+    assert.ok(Number.isFinite(s.t1) && Number.isFinite(s.t2) && Number.isFinite(s.x) && Number.isFinite(s.y), `finite for ${x},${y}`);
+  }
+}
+
+// Near-origin targets are pushed out to MIN_REACH along the same bearing.
+{
+  const s = solveIK(0.1, 0.1, -1);
+  const p = forward(s.t1, s.t2);
+  assert.ok(close(Math.hypot(p.x, p.y), MIN_REACH, 1e-6));
+  assert.ok(close(Math.atan2(p.y, p.x), Math.atan2(0.1, 0.1), 1e-6));
+  assert.equal(s.clamped, true);
 }
 
 // Bezier endpoints and easing endpoints.

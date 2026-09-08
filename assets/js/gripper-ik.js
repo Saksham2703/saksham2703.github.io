@@ -5,15 +5,16 @@
 export const L1 = 2.6;
 export const L2 = 2.2;
 export const REACH = L1 + L2 - 0.01;
-const MIN_REACH = Math.abs(L1 - L2) + 0.05;
+export const MIN_REACH = Math.abs(L1 - L2) + 0.05;
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 // elbow: -1 bends clockwise (elbow above the chord for targets on the right),
 // +1 bends counter-clockwise (elbow above the chord for targets on the left).
+// t1 is not unwrapped across ±π; callers that damp angles must unwrap against the current pose.
 export function solveIK(tx, ty, elbow = -1) {
   let d = Math.hypot(tx, ty);
-  if (d < 1e-9) { tx = 0; ty = MIN_REACH; d = MIN_REACH; }
+  if (!Number.isFinite(d) || d < 1e-9) { tx = 0; ty = MIN_REACH; d = MIN_REACH; }
   const dc = clamp(d, MIN_REACH, REACH);
   const s = dc / d;
   const x = tx * s, y = ty * s;
