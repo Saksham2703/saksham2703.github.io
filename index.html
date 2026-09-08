@@ -4,13 +4,22 @@ description: "I write low-level software for hardware that has to know where it 
 ---
 
 <div class="wrap">
-  <div class="hero">
-    <div class="pipeline">
-      <span>Sense</span><i>→</i><span>Perceive</span><i>→</i><span>Decide</span><i>→</i><span>Act</span>
+  <div class="hero hero--cell">
+    <div class="hero-text">
+      <div class="pipeline">
+        <span>Sense</span><i>→</i><span>Perceive</span><i>→</i><span>Decide</span><i>→</i><span>Act</span>
+      </div>
+      <h1>I write low-level software for hardware that has to <em>know where it is</em>.</h1>
+      <p>Two years of Linux drivers, board bring-up and multi-sensor tracking pipelines for AR glasses at <strong>Rivet Industries</strong>. Nights and weekends: teaching myself imitation learning, and soldering a hand-tracking glove that doesn't use cameras.</p>
+      <p>Below is a policy I trained failing, and then succeeding, because of one number I changed at inference time. Drag it yourself.</p>
+      <div class="cta">
+        <a data-grasp href="mailto:{{ site.email }}">Email</a>
+        <a data-grasp href="https://github.com/{{ site.github_username }}">GitHub</a>
+        <a data-grasp href="{{ site.linkedin }}">LinkedIn</a>
+      </div>
+      <p class="hint" data-hint hidden>(the arm on the right is tracking you — hover a link)</p>
     </div>
-    <h1>I write low-level software for hardware that has to <em>know where it is</em>.</h1>
-    <p>Two years of Linux drivers, board bring-up and multi-sensor tracking pipelines for AR glasses at <strong>Rivet Industries</strong>. Nights and weekends: teaching myself imitation learning, and soldering a hand-tracking glove that doesn't use cameras.</p>
-    <p>Below is a policy I trained failing, and then succeeding, because of one number I changed at inference time. Drag it yourself.</p>
+    {% include gripper-cell.html %}
   </div>
 </div>
 
