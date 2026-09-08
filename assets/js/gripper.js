@@ -8,16 +8,31 @@ const stateEl = cell.querySelector('[data-cell-state]');
 
 // ---------- constants ----------
 const SCENE_W = 10;                   // scene units across the cell
+const MIN_VIS_H = 7.2;                // never show less than this height, so the reach circle fits
 const SHOULDER_Y = 0.55;              // shoulder height above the floor
 const FLOOR_Y = 0.9;               // lifts the rig clear of the caption strip
-const REST = { t1: 1.75, t2: -1.22 }; // 100°, -70°
-const JAW = { closed: 0.15, relaxed: 0.35, open: 0.85 };
+const BASE_H = 0.25;
+const REST = { t1: THREE.MathUtils.degToRad(100), t2: THREE.MathUtils.degToRad(-70) };
+// jaw = centre-to-centre finger spacing; fingers are FINGER_W wide, so closed means touching.
+const FINGER_W = 0.18;
+const JAW = { closed: FINGER_W + 0.02, relaxed: 0.35, open: 0.85 };
 const COLORS = {
   body: 0xefebe0, joint: 0xd9d2c0, edge: 0x8b8577, path: 0x2b6555,
 };
 
 // ---------- renderer, camera, lights ----------
-const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+} catch (err) {
+  // No WebGL: undo what the loader did and fall back to the single-column hero.
+  cell.hidden = true;
+  const hero = cell.closest('.hero');
+  if (hero) hero.classList.add('hero--solo');
+  const hint = document.querySelector('[data-hint]');
+  if (hint) hint.hidden = true;
+  throw err;
+}
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 100);
@@ -30,20 +45,20 @@ const rig = new THREE.Group();       // everything that stands on the floor
 rig.position.y = FLOOR_Y;
 scene.add(rig);
 
-let visH = SCENE_W; // visible scene height at z = 0; set by resize()
+let visW = SCENE_W, visH = SCENE_W; // visible scene width/height at z = 0; set by resize()
 function resize() {
   const w = cell.clientWidth, h = cell.clientHeight;
   if (!w || !h) return;
   renderer.setSize(w, h, false);
   const aspect = w / h;
   camera.aspect = aspect;
-  visH = SCENE_W / aspect;
-  const dist = (SCENE_W / 2) / (aspect * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+  visW = Math.max(SCENE_W, MIN_VIS_H * aspect);
+  visH = visW / aspect;
+  const dist = (visW / 2) / (aspect * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
   camera.position.set(0, visH / 2, dist);
   camera.lookAt(0, visH / 2, 0);
   camera.updateProjectionMatrix();
 }
-new ResizeObserver(() => { resize(); requestFrame(); }).observe(cell);
 
 // ---------- materials ----------
 const bodyMat = new THREE.MeshStandardMaterial({ color: COLORS.body, roughness: 0.92, metalness: 0 });
@@ -63,9 +78,9 @@ const cyl = (r, h) => new THREE.CylinderGeometry(r, r, h, 24);
 const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
 
 // ---------- the arm: base → shoulder → link1 → elbow → link2 → wrist → palm → fingers ----------
-const base = part(cyl(0.9, 0.25), jointMat, 0, 0.125);
+const base = part(cyl(0.9, BASE_H), jointMat, 0, BASE_H / 2);
 rig.add(base);
-const pedestal = part(box(0.6, SHOULDER_Y - 0.25, 0.6), bodyMat, 0, 0.25 + (SHOULDER_Y - 0.25) / 2);
+const pedestal = part(box(0.6, SHOULDER_Y - BASE_H, 0.6), bodyMat, 0, BASE_H + (SHOULDER_Y - BASE_H) / 2);
 rig.add(pedestal);
 
 const shoulder = new THREE.Group();
@@ -86,16 +101,20 @@ wrist.position.set(0, L2, 0);
 elbow.add(wrist);
 wrist.add(part(cyl(0.28, 0.5), jointMat).rotateX(Math.PI / 2));
 wrist.add(part(box(1.1, 0.35, 0.5), bodyMat, 0, 0.2));
-const fingerL = part(box(0.18, 0.7, 0.4), bodyMat, 0, 0.725);
-const fingerR = part(box(0.18, 0.7, 0.4), bodyMat, 0, 0.725);
+const fingerGeom = box(FINGER_W, 0.7, 0.4);
+const fingerL = part(fingerGeom, bodyMat, 0, 0.725);
+const fingerR = part(fingerGeom, bodyMat, 0, 0.725);
 wrist.add(fingerL, fingerR);
 
 // ---------- trajectory line ----------
 const PATH_N = 24;
+// NOTE: LineDashedMaterial needs computeLineDistances() after every position write, and the
+// zero buffer gives a zero bounding sphere, so the line is not frustum culled.
 const pathGeom = new THREE.BufferGeometry();
 pathGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PATH_N * 3), 3));
 const pathMat = new THREE.LineDashedMaterial({ color: COLORS.path, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0 });
 const pathLine = new THREE.Line(pathGeom, pathMat);
+pathLine.frustumCulled = false;
 pathLine.position.y = SHOULDER_Y;
 rig.add(pathLine);
 
@@ -120,7 +139,8 @@ function requestFrame() {
 resize();
 applyPose(REST.t1, REST.t2, 0, JAW.relaxed);
 requestFrame();
+new ResizeObserver(() => { resize(); requestFrame(); }).observe(cell);
 
 // Behaviour is attached in the next tasks; keep these referenced so the
 // import list stays honest under a linter.
-void solveIK; void forward; void bezier; void easeInOut; void damp; void stateEl; void visH;
+void solveIK; void forward; void bezier; void easeInOut; void damp; void stateEl; void visW; void visH;
