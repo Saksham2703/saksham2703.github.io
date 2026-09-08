@@ -57,7 +57,7 @@ nav.top a:hover,nav.top a:focus-visible{color:var(--ink); border-bottom-color:va
 
 section{padding:60px 0; border-bottom:1px solid var(--line)}
 .eyebrow{
-  font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.15em;
+  font-family:"JetBrains Mono",monospace; font-size:12.5px; font-weight:500; letter-spacing:.13em;
   text-transform:uppercase; color:var(--accent); margin:0 0 12px;
 }
 h2{font-size:clamp(25px,3.2vw,34px); line-height:1.12; letter-spacing:-.022em; font-weight:700; margin:0 0 16px}
@@ -233,4 +233,5 @@ article.note table th,article.note table td{border-bottom:1px solid var(--line);
 .patent a:hover{border-bottom-color:var(--accent)}
 .patent .no{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--ink-3)}
 .edu{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:baseline}
+.edu h3{margin:0 0 6px; font-size:19px; font-weight:700; letter-spacing:-.012em}
 .edu .deg{color:var(--ink-2); font-size:17px}
