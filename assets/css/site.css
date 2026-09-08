@@ -156,7 +156,7 @@ svg.sweep text{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabu
 }
 .row p{margin:0; font-size:16.5px; color:var(--ink-2); line-height:1.5}
 .row .num{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--ink); font-variant-numeric:tabular-nums}
-.row > .artifact{justify-self:end}
+.row > .artifact{justify-self:start}
 .artifact{
   white-space:nowrap; font-family:"JetBrains Mono",monospace; font-size:10.5px;
   letter-spacing:.08em; text-transform:uppercase; padding:5px 10px; border-radius:3px;
