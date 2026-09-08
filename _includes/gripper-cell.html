@@ -1,3 +1,4 @@
+<noscript><style>.cell{display:none}</style></noscript>
 <div class="cell" data-cell aria-hidden="true">
   <canvas data-gripper-canvas></canvas>
   <div class="celltag">
@@ -9,6 +10,10 @@
 (function () {
   var cell = document.querySelector('[data-cell]');
   if (!cell) return;
+  if (window.HTMLScriptElement && HTMLScriptElement.supports && !HTMLScriptElement.supports('importmap')) {
+    cell.hidden = true;
+    return;
+  }
   var hero = cell.closest('.hero');
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches) {
     cell.hidden = true;
@@ -23,7 +28,9 @@
     s.src = '{{ "/assets/js/gripper.js" | relative_url }}';
     document.head.appendChild(s);
   }
-  var idle = window.requestIdleCallback || function (f) { setTimeout(f, 0); };
+  var idle = window.requestIdleCallback
+    ? function (f) { requestIdleCallback(f, { timeout: 2000 }); }
+    : function (f) { setTimeout(f, 0); };
   if (document.readyState === 'complete') idle(load);
   else addEventListener('load', function () { idle(load); });
 })();
