@@ -256,7 +256,7 @@ article.note table th,article.note table td{border-bottom:1px solid var(--line);
 }
 .patent h3 a{color:var(--accent); border-bottom-color:var(--accent-soft)}
 
-.hint{
+.hint, .hero p.hint{
   font-family:"JetBrains Mono",monospace; font-size:11.5px; letter-spacing:.02em;
   color:var(--ink-3); margin:14px 0 0;
 }
