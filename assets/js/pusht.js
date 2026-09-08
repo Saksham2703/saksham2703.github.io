@@ -68,6 +68,16 @@
       slider.max = String(D.runs.length - 1);
 
       root.querySelectorAll('[data-n]').forEach((el) => (el.textContent = D.n_eval_episodes));
+
+      // Keep the chart's screen-reader summary in sync with the data, so it can
+      // never describe numbers the chart no longer shows.
+      const svg = root.querySelector('[data-chart-svg]');
+      if (svg) {
+        svg.setAttribute('aria-label',
+          'Success rate by execution horizon: ' +
+          D.runs.map((d) => `${d.h} steps ${d.pc_success.toFixed(1)}%`).join(', ') +
+          `. Measured over ${D.n_eval_episodes} episodes per setting.`);
+      }
       const noise = root.querySelector('[data-noise]');
       if (noise) noise.textContent = D.binomial_noise_pts;
 
