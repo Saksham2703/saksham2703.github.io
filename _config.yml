@@ -20,3 +20,5 @@ exclude:
   - Gemfile.lock
   - vendor
   - README.md
+  - assets/js/gripper-ik.test.mjs
+  - assets/js/package.json
