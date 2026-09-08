@@ -1,0 +1,22 @@
+---
+layout: default
+title: Notes
+description: "Findings from things I've built — mostly robot learning and low-level debugging."
+---
+<section><div class="wrap">
+  <p class="eyebrow">Notes</p>
+  <h2>Findings, not opinions.</h2>
+  <p class="lede">Short write-ups of things I built or broke, with the numbers attached.</p>
+
+  <div class="notelist">
+    {% for post in site.posts %}
+    <a class="note-row" href="{{ post.url | relative_url }}">
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %b %Y" }}</time>
+      <div>
+        <h3>{{ post.title }}</h3>
+        <p>{{ post.description | default: post.excerpt | strip_html | truncate: 180 }}</p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div></section>
