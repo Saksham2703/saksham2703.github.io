@@ -1,0 +1,37 @@
+<div class="rig" data-pusht data-src="{{ '/assets/data/pusht-sweep.json' | relative_url }}" data-video-base="{{ '/assets/video/pusht' | relative_url }}">
+  <div class="stage" data-stage>
+    <div class="stagetag">
+      <span data-tag-left>loading…</span>
+      <span data-tag-right></span>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="readout">
+      <div class="bignum" data-bignum>
+        <div class="v" data-pc>—</div>
+        <div class="k">pc_success · n=<span data-n>50</span></div>
+      </div>
+      <div class="verdict" data-verdict>
+        <span class="chip" data-chip></span>
+        <p data-text></p>
+      </div>
+    </div>
+
+    <div class="control">
+      <div class="lab">
+        <span>Execution horizon</span>
+        <span><b data-hval></b> actions before re-observing</span>
+      </div>
+      <input type="range" data-slider min="0" max="4" step="1" value="4" aria-label="Execution horizon, n_action_steps">
+      <div class="ticks" data-ticks></div>
+    </div>
+
+    <figure class="chartwrap" style="margin:0">
+      <figcaption>Success rate across the sweep · whiskers = ±<span data-noise>6.5</span> pt binomial noise at n=<span data-n>50</span></figcaption>
+      <svg class="sweep" viewBox="0 0 460 150" role="img" data-chart-svg
+           aria-label="Success rate by execution horizon: 5 steps 4.0%, 10 steps 22.0%, 20 steps 34.0%, 30 steps 12.0%, 100 steps 0.0%">
+        <g data-bars></g>
+      </svg>
+    </figure>
+  </div>
+</div>
