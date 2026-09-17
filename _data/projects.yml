@@ -10,31 +10,19 @@
 #            kind  live (accent) | video (muted) | omit for default
 #            href  omit to render a non-clickable badge
 
-- name: lerobot-il
-  meta: 2026 · solo
-  tags: [Decide, Imitation learning, PyTorch]
+- name: Orion
+  meta: 2026 · Google × Qualcomm
+  tags: [Decide, On-device LLM, Android]
   blurb: >-
-    I went from not knowing what behavioral cloning was to finding an
-    index-aliasing bug in Hugging Face's LeRobot sampler in about two weeks. Four
-    policies trained from scratch on a rented A10 with the same epoch budget, plus
-    a breakdown of how each one fails, because the success rate alone was hiding it.
-  facts: 4 policies · 13 eval runs · 1 upstream bug
+    An agent that operates an Android phone, with the model running on the phone
+    itself. Built in 24 hours, and in front of the judges it handled a task we
+    hadn't rehearsed.
+  facts: MIT licensed · open source
   badge:
-    label: Interactive write-up
+    label: Site
     kind: live
-    href: /blog/a-library-default-cost-me-the-result/
+    href: https://orionassistanthack.github.io/Orion/
 
-- name: EchoGlove
-  meta: 2026 · in progress
-  tags: [Sense, ESP32-S3, Sensor fusion]
-  blurb: >-
-    A hand-tracking glove with no cameras: ultrasonic time-of-flight, IR laser
-    ToF and an IMU, fused. I'm doing all of it myself, from the parts list to the
-    firmware to the 3D viewer, for under $500. It's the first project where I own
-    the whole stack, soldering included.
-  facts: Build log · phase specs · learnings
-  badge:
-    label: Build log
 
 - name: LeviTap
   meta: 2023 · MadHacks, 1st place
@@ -49,18 +37,31 @@
     label: Source
     href: https://github.com/Saksham2703/madHacks-2023
 
-- name: Orion
-  meta: 2026 · Google × Qualcomm
-  tags: [Decide, On-device LLM, Android]
+
+- name: EchoGlove
+  meta: 2026 · in progress
+  tags: [Sense, ESP32-S3, Sensor fusion]
   blurb: >-
-    An agent that operates an Android phone, with the model running on the phone
-    itself. Built in 24 hours, and in front of the judges it handled a task we
-    hadn't rehearsed.
-  facts: MIT licensed · open source
+    A hand-tracking glove with no cameras: ultrasonic time-of-flight, IR laser
+    ToF and an IMU, fused. I'm doing all of it myself, from the parts list to the
+    firmware to the 3D viewer, for under $500. It's the first project where I own
+    the whole stack, soldering included.
+  facts: Build log · phase specs · learnings
   badge:
-    label: Site
-    kind: live
-    href: https://orionassistanthack.github.io/Orion/
+    label: Build log
+
+
+- name: Holos
+  meta: 2024 · CS 639 capstone
+  tags: [XR, Quest 3, GPT-4]
+  blurb: >-
+    A VR anatomy app for the Quest 3. You pull a skeleton apart with your hands,
+    ask a question out loud and get a spoken answer. We went through three
+    grab-interaction SDKs before one worked.
+  facts: Team of 5 · companion React site
+  badge:
+    label: Screenshot
+    href: /assets/img/holos.jpg
 
 - name: Thermal person detection
   meta: 2023 · WiNGS Lab, UW–Madison
@@ -74,14 +75,18 @@
     label: Detection reel
     kind: video
 
-- name: Holos
-  meta: 2024 · CS 639 capstone
-  tags: [XR, Quest 3, GPT-4]
+
+- name: lerobot-il
+  meta: 2026 · solo
+  tags: [Decide, Imitation learning, PyTorch]
   blurb: >-
-    A VR anatomy app for the Quest 3. You pull a skeleton apart with your hands,
-    ask a question out loud and get a spoken answer. We went through three
-    grab-interaction SDKs before one worked.
-  facts: Team of 5 · companion React site
+    I went from not knowing what behavioral cloning was to finding an
+    index-aliasing bug in Hugging Face's LeRobot sampler in about two weeks. Four
+    policies trained from scratch on a rented A10 with the same epoch budget, plus
+    a breakdown of how each one fails, because the success rate alone was hiding it.
+  facts: 4 policies · 13 eval runs · 1 upstream bug
   badge:
-    label: Screenshot
-    href: /assets/img/holos.jpg
+    label: Interactive write-up
+    kind: live
+    href: /blog/a-library-default-cost-me-the-result/
+
