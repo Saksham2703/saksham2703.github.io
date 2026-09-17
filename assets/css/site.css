@@ -175,9 +175,15 @@ svg.sweep text{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabu
 }
 .artifact.live{border-color:var(--accent); color:var(--accent); background:var(--accent-soft)}
 .artifact.video{border-color:var(--line-2); color:var(--ink-2)}
-footer{padding:44px 0 70px; color:var(--ink-3); font-size:15.5px}
-footer .wrap{display:flex; flex-direction:column; gap:10px}
-footer a{color:var(--ink-2)}
+footer{padding:44px 0 70px}
+.social{list-style:none; margin:0; padding:0; display:flex; gap:18px; flex-wrap:wrap}
+.social a{
+  display:flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--line-2); box-shadow:var(--shadow); color:var(--ink);
+  transition:transform .18s ease, border-color .18s ease, color .18s ease;
+}
+.social a:hover, .social a:focus-visible{transform:translateY(-2px); border-color:var(--accent); color:var(--accent); outline:none}
+.social svg{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
 
 @media (max-width:880px){
   .rig{grid-template-columns:1fr}
