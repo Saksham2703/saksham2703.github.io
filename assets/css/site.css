@@ -218,11 +218,11 @@ article.note .meta{font-family:"JetBrains Mono",monospace; font-size:12px; color
 article.note h2{
   font-size:23px; margin:38px 0 14px; width:fit-content;
   text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:5px;
-  background-image:linear-gradient(var(--accent-soft),var(--accent-soft));
-  background-repeat:no-repeat; background-size:0 100%;
-  transition:background-size .25s ease, color .25s ease;
+  background-image:linear-gradient(100deg, transparent .8%, var(--highlighter) 2.5%, var(--highlighter) 97.5%, transparent 99.2%);
+  background-repeat:no-repeat; background-size:0% 88%; background-position:0 55%;
+  transition:background-size .35s ease; border-radius:2px;
 }
-article.note h2:hover{background-size:100% 100%; color:var(--accent)}
+article.note h2:hover{background-size:100% 88%}
 article.note p{margin:0 0 17px; font-size:17.5px}
 article.note pre{
   overflow-x:auto; background:var(--surface); border:1px solid var(--line);
