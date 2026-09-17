@@ -16,7 +16,7 @@
   const CONF = 0.8;
   const PINCH_ON = 0.35;    // thumb-index gap / hand size, below = pinch
   const PINCH_OFF = 0.5;    // above = release (hysteresis)
-  const PINCH_FREEZE = 0.7; // below = fingers closing, cursor locks in place
+  const PINCH_FREEZE = 0.5; // below = fingers closing, cursor locks in place
   const SMOOTH = 0.35;      // cursor EMA factor per frame
   const BAND = [0.2, 0.8];  // fraction of the frame mapped to the full viewport
   const SCROLL_GAIN = 2.5;  // viewport heights scrolled per frame height of hand travel
