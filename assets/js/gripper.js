@@ -7,8 +7,7 @@ if (!canvas) throw new Error('gripper: no cell');
 const stateEl = cell.querySelector('[data-cell-state]');
 
 // ---------- constants ----------
-const SHOULDER_Y = 0.55;              // shoulder height above the floor
-const FLOOR_Y = 0.9;               // lifts the rig clear of the caption strip
+const FLOOR_Y = 0.9;                  // lifts the rig clear of the caption strip
 // jaw = centre-to-centre finger spacing; fingers are FINGER_W wide, so closed means touching.
 const FINGER_W = 0.18;
 const JAW = { closed: FINGER_W + 0.02, relaxed: 0.35, open: 0.85 };
@@ -16,11 +15,14 @@ const JAW = { closed: FINGER_W + 0.02, relaxed: 0.35, open: 0.85 };
 const TOOL_R = Math.hypot(JAW.open / 2 + FINGER_W / 2, 0.725 + 0.35, 0.2);
 const ENVELOPE = MAX_EXT + TOOL_R;    // farthest any geometry gets from the shoulder
 const FRAME_PAD = 1.02;               // geometry near the reach limit sits at z ≤ +0.25, so it is magnified ~1% vs the z = 0 plane
-// Page links sit left of the cell, so the shoulder is offset right and the frame covers the full
-// reach on the left; a reach straight to the right can clip at the edge.
-const SHOULDER_X = 0.2 * ENVELOPE;
-const SCENE_W = 1.3 * ENVELOPE * FRAME_PAD;                          // min visible width; aims are clamped to the frame (frameClamp)
-const MIN_VIS_H = (FLOOR_Y + SHOULDER_Y + ENVELOPE) * FRAME_PAD;      // min visible height
+// Page links sit left of the cell, so the shoulder is offset right and the frame is just wide enough
+// for the arm to lie fully straight toward the left edge (the fingers may touch the edge); straight
+// right it clips. The shoulder sits on a column at mid-frame height (see resize) so it can reach
+// down as well as up.
+const SHOULDER_X = 0.15 * MAX_EXT;
+const SCENE_W = 2 * (MAX_EXT + SHOULDER_X) + 0.5;                     // min visible width; aims are clamped to the frame (frameClamp)
+const MIN_VIS_H = 1.5 * ENVELOPE * FRAME_PAD;                         // min visible height
+let SHOULDER_Y = MIN_VIS_H / 2 - FLOOR_Y;                             // shoulder height above the floor; set by resize()
 const BASE_H = 0.25;
 const REST = { t1: THREE.MathUtils.degToRad(100), t2: THREE.MathUtils.degToRad(-70) };
 const COLORS = {
@@ -66,6 +68,12 @@ function resize() {
   camera.lookAt(0, visH / 2, 0);
   camera.far = dist + SCENE_W;
   camera.updateProjectionMatrix();
+  // keep the shoulder at the vertical centre of whatever frame the cell's aspect gives us
+  SHOULDER_Y = visH / 2 - FLOOR_Y;
+  shoulder.position.y = SHOULDER_Y;
+  pathLine.position.y = SHOULDER_Y;
+  pedestal.scale.y = SHOULDER_Y - BASE_H;
+  pedestal.position.y = BASE_H + (SHOULDER_Y - BASE_H) / 2;
 }
 
 // ---------- materials ----------
@@ -88,7 +96,7 @@ const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
 // ---------- the arm: base → shoulder → link1 → elbow → link2 → wrist → palm → fingers ----------
 const base = part(cyl(0.9, BASE_H), jointMat, 0, BASE_H / 2);
 rig.add(base);
-const pedestal = part(box(0.6, SHOULDER_Y - BASE_H, 0.6), bodyMat, 0, BASE_H + (SHOULDER_Y - BASE_H) / 2);
+const pedestal = part(box(0.7, 1, 0.7), bodyMat, 0, BASE_H + 0.5);   // unit height; resize() stretches it to the shoulder
 rig.add(pedestal);
 
 const shoulder = new THREE.Group();
@@ -148,7 +156,7 @@ function toScene(cx, cy) {
 }
 // Keep every aim inside the visible frame (shoulder-relative), with room for the tool, so a target
 // past the cell edge pulls the arm toward the edge instead of out of view.
-const FRAME_M = TOOL_R * 0.7;
+const FRAME_M = 0.3;
 function frameClamp(p) {
   const x = Math.min(visW / 2 - SHOULDER_X - FRAME_M, Math.max(-visW / 2 - SHOULDER_X + FRAME_M, p.x));
   const y = Math.min(visH - FLOOR_Y - SHOULDER_Y - FRAME_M, Math.max(-FLOOR_Y - SHOULDER_Y + FRAME_M, p.y));

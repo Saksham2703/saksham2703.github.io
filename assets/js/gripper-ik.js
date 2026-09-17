@@ -5,8 +5,7 @@
 export const L1 = 2.6;
 export const L2 = 2.2;
 export const REACH = L1 + L2 - 0.01;
-// targets are clamped short of full extension so the arm never locks straight and the frame stays tight
-export const MAX_EXT = REACH * 0.88;
+export const MAX_EXT = REACH;
 export const MIN_REACH = Math.abs(L1 - L2) + 0.05;
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
