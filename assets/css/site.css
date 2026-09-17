@@ -67,7 +67,7 @@ section{padding:60px 0; border-bottom:1px solid var(--line)}
   text-transform:uppercase; color:var(--accent); margin:0 0 12px;
 }
 h2{font-size:clamp(21px,2.2vw,26px); line-height:1.25; letter-spacing:-.012em; font-weight:700; margin:0 0 16px}
-.lede{max-width:62ch; color:var(--ink-2); margin:0 0 34px; font-size:18px}
+.lede{max-width:62ch; color:var(--ink-2); margin:0 0 34px; font-size:18px; text-wrap:balance}
 .lede strong{color:var(--ink); font-weight:500}
 
 .rig{
