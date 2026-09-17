@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { L1, L2, REACH, solveIK, forward, bezier, easeInOut, damp } from './gripper-ik.js';
+import { L1, L2, MAX_EXT, solveIK, forward, bezier, easeInOut, damp } from './gripper-ik.js';
 
 const cell = document.querySelector('[data-cell]');
 const canvas = cell && cell.querySelector('[data-gripper-canvas]');
@@ -14,10 +14,12 @@ const FINGER_W = 0.18;
 const JAW = { closed: FINGER_W + 0.02, relaxed: 0.35, open: 0.85 };
 // radius from the wrist origin to the farthest finger corner (tip plane 0.725 + 0.35, lateral spread at JAW.open, half-depth 0.2)
 const TOOL_R = Math.hypot(JAW.open / 2 + FINGER_W / 2, 0.725 + 0.35, 0.2);
-const ENVELOPE = REACH + TOOL_R;      // farthest any geometry gets from the shoulder
-const FRAME_PAD = 1.04;               // geometry near the reach limit sits at z ≤ +0.25, so it is magnified ~1% vs the z = 0 plane
-// NOTE: this frames the envelope's bounding box; in a tall column that leaves headroom above the arm. Revisit once the tracked workspace is known.
-const SCENE_W = 2 * ENVELOPE * FRAME_PAD;                            // min visible width
+const ENVELOPE = MAX_EXT + TOOL_R;    // farthest any geometry gets from the shoulder
+const FRAME_PAD = 1.02;               // geometry near the reach limit sits at z ≤ +0.25, so it is magnified ~1% vs the z = 0 plane
+// Page links sit left of the cell, so the shoulder is offset right and the frame covers the full
+// reach on the left; a reach straight to the right can clip at the edge.
+const SHOULDER_X = 0.2 * ENVELOPE;
+const SCENE_W = 1.3 * ENVELOPE * FRAME_PAD;                          // min visible width; aims are clamped to the frame (frameClamp)
 const MIN_VIS_H = (FLOOR_Y + SHOULDER_Y + ENVELOPE) * FRAME_PAD;      // min visible height
 const BASE_H = 0.25;
 const REST = { t1: THREE.MathUtils.degToRad(100), t2: THREE.MathUtils.degToRad(-70) };
@@ -47,7 +49,7 @@ sun.position.set(-4, 8, 6);
 scene.add(sun);
 
 const rig = new THREE.Group();       // everything that stands on the floor
-rig.position.y = FLOOR_Y;
+rig.position.set(SHOULDER_X, FLOOR_Y, 0);
 scene.add(rig);
 
 let visW = SCENE_W, visH = SCENE_W; // visible scene width/height at z = 0; set by resize()
@@ -140,8 +142,16 @@ function applyPose(t1, t2, wristRel, jaw) {
 // ---------- coordinate mapping (client px → scene units, shoulder-relative) ----------
 function toScene(cx, cy) {
   const r = canvas.getBoundingClientRect();
-  const x = ((cx - r.left) / r.width) * visW - visW / 2;
+  const x = ((cx - r.left) / r.width) * visW - visW / 2 - SHOULDER_X;
   const y = ((r.bottom - cy) / r.height) * visH - FLOOR_Y - SHOULDER_Y;
+  return { x, y };
+}
+// Keep every aim inside the visible frame (shoulder-relative), with room for the tool, so a target
+// past the cell edge pulls the arm toward the edge instead of out of view.
+const FRAME_M = TOOL_R * 0.7;
+function frameClamp(p) {
+  const x = Math.min(visW / 2 - SHOULDER_X - FRAME_M, Math.max(-visW / 2 - SHOULDER_X + FRAME_M, p.x));
+  const y = Math.min(visH - FLOOR_Y - SHOULDER_Y - FRAME_M, Math.max(-FLOOR_Y - SHOULDER_Y + FRAME_M, p.y));
   return { x, y };
 }
 
@@ -165,6 +175,7 @@ const nearest = (a, ref) => ref + wrap(a - ref);               // equivalent of 
 function aimAt(p) {
   // hysteresis on the elbow side so a cursor near x = 0 does not flap;
   // while a target is committed (PLANNING/REACHING/GRASP) the sign holds instead
+  p = frameClamp(p);
   if (!target) { if (p.x > 0.4) elbowSign = -1; else if (p.x < -0.4) elbowSign = 1; }
   const ik = solveIK(p.x, p.y, elbowSign);
   goal.t1 = ik.t1; goal.t2 = ik.t2;
@@ -202,9 +213,9 @@ function writePath() {
 }
 function retarget(el) {
   // elbowSign is committed by plan() and held for the whole reach; a resize must not flip it
-  const raw = elementPoint(el);
+  const raw = frameClamp(elementPoint(el));
   const ik = solveIK(raw.x, raw.y, elbowSign);
-  target = { x: ik.x, y: ik.y };               // clamped to reach along the bearing
+  target = { x: ik.x, y: ik.y };               // clamped to the frame, then to reach along the bearing
   const p0 = forward(cur.t1, cur.t2);
   const dx = target.x - p0.x, dy = target.y - p0.y;
   // control point: chord midpoint pushed 25% of the chord length along the
@@ -238,7 +249,7 @@ function grasp() {
   if (state === S.PLANNING) { clock = 0; lambda = 14; pathMat.opacity = PATH_ALPHA; }
   goal.jaw = JAW.closed; setState(S.GRASP); wake();
 }
-function ungrasp() { if (state === S.GRASP) { goal.jaw = JAW.open; setState(S.REACHING); wake(); } }
+function ungrasp() { if (state === S.GRASP) { goal.jaw = arrived ? JAW.closed : JAW.open; setState(S.REACHING); wake(); } }
 
 function step(dt) {
   const ms = dt * 1000;
@@ -251,7 +262,7 @@ function step(dt) {
     if (!arrived) {
       const u = easeInOut(Math.min(1, clock / REACH_MS));
       aimAt(bezier(path.p0, path.p1, path.p2, u));
-      if (u >= 1) { arrived = true; clock = 0; }
+      if (u >= 1) { arrived = true; clock = 0; if (state === S.REACHING) goal.jaw = JAW.closed; } // close on the link
     } else {
       pathMat.opacity = Math.max(0, PATH_ALPHA * (1 - clock / FADE_MS));
       aimAt(target);

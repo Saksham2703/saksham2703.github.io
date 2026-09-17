@@ -5,6 +5,8 @@
 export const L1 = 2.6;
 export const L2 = 2.2;
 export const REACH = L1 + L2 - 0.01;
+// targets are clamped short of full extension so the arm never locks straight and the frame stays tight
+export const MAX_EXT = REACH * 0.88;
 export const MIN_REACH = Math.abs(L1 - L2) + 0.05;
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -15,7 +17,7 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 export function solveIK(tx, ty, elbow = -1) {
   let d = Math.hypot(tx, ty);
   if (!Number.isFinite(d) || d < 1e-9) { tx = 0; ty = MIN_REACH; d = MIN_REACH; }
-  const dc = clamp(d, MIN_REACH, REACH);
+  const dc = clamp(d, MIN_REACH, MAX_EXT);
   const s = dc / d;
   const x = tx * s, y = ty * s;
   const c2 = clamp((dc * dc - L1 * L1 - L2 * L2) / (2 * L1 * L2), -1, 1);
