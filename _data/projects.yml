@@ -14,10 +14,10 @@
   meta: 2026 · solo
   tags: [Decide, Imitation learning, PyTorch]
   blurb: >-
-    Two weeks from "what is behavioral cloning?" to root-causing an index-aliasing
-    bug in Hugging Face's LeRobot sampler. Four policies trained from scratch on a
-    rented A10, a fixed epoch budget across every run, and a failure taxonomy
-    because one success number was hiding the behavior.
+    I went from not knowing what behavioral cloning was to finding an
+    index-aliasing bug in Hugging Face's LeRobot sampler in about two weeks. Four
+    policies trained from scratch on a rented A10 with the same epoch budget, plus
+    a breakdown of how each one fails, because the success rate alone was hiding it.
   facts: 4 policies · 13 eval runs · 1 upstream bug
   badge:
     label: Interactive ↑
@@ -28,10 +28,10 @@
   meta: 2026 · in progress
   tags: [Sense, ESP32-S3, Sensor fusion]
   blurb: >-
-    A camera-free hand-tracking glove fusing MEMS ultrasonic time-of-flight, IR
-    laser ToF and IMU. Bill of materials to firmware to a real-time 3D viewer,
-    solo, under $500. First project where I own the whole stack, down to the
-    soldering iron.
+    A hand-tracking glove with no cameras: ultrasonic time-of-flight, IR laser
+    ToF and an IMU, fused. I'm doing all of it myself, from the parts list to the
+    firmware to the 3D viewer, for under $500. It's the first project where I own
+    the whole stack, soldering included.
   facts: Build log · phase specs · learnings
   badge:
     label: Build log
@@ -40,10 +40,10 @@
   meta: 2023 · MadHacks, 1st place
   tags: [Perceive, Act, MediaPipe]
   blurb: >-
-    Control a computer with your hands and a stock 640×480 webcam — cursor, both
-    clicks, scroll, and speech-to-text, six gestures decoded from 21 landmarks at
-    30fps. Built because a teammate's mom cut her finger cooking and couldn't use
-    her laptop.
+    Control your computer with hand gestures and a plain 640×480 webcam: cursor,
+    both clicks, scroll and speech-to-text, six gestures read off 21 hand landmarks
+    at 30 fps. We built it after a teammate's mom cut her finger cooking and
+    couldn't use her laptop.
   facts: levitap.tech · macOS &amp; Windows installers
   badge:
     label: Source
@@ -53,9 +53,9 @@
   meta: 2026 · Google × Qualcomm
   tags: [Decide, On-device LLM, Android]
   blurb: >-
-    An on-device agentic framework for Android — "computer use" for a phone, with
-    the model running locally. Built in 24 hours; the agent generalised past the
-    scripted demo in front of the judges.
+    An agent that operates an Android phone, with the model running on the phone
+    itself. Built in 24 hours, and in front of the judges it handled a task we
+    hadn't rehearsed.
   facts: MIT licensed · open source
   badge:
     label: Demo video
@@ -65,9 +65,9 @@
   meta: 2023 · WiNGS Lab, UW–Madison
   tags: [Perceive, YOLOv6, Thermal]
   blurb: >-
-    Undergraduate researcher under Prof. Suman Banerjee, on an oversubscribed
-    project: detecting people in thermal imagery for search in darkness and smoke,
-    where visible-light cameras fail.
+    Detecting people in thermal imagery so first responders can search in darkness
+    and smoke, where normal cameras are useless. Undergraduate research with Prof.
+    Suman Banerjee.
   facts: Teledyne FLIR dataset
   badge:
     label: Detection reel
@@ -77,8 +77,8 @@
   meta: 2024 · CS 639 capstone
   tags: [XR, Quest 3, GPT-4]
   blurb: >-
-    A VR anatomy environment for the Meta Quest 3: pull a skeleton apart with your
-    hands, ask a question out loud, and get a spoken answer back. Three
+    A VR anatomy app for the Quest 3. You pull a skeleton apart with your hands,
+    ask a question out loud and get a spoken answer. We went through three
     grab-interaction SDKs before one worked.
   facts: Team of 5 · companion React site
   badge:

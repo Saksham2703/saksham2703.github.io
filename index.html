@@ -16,7 +16,7 @@ description: "I write low-level software for hardware that has to know where it 
         <a data-grasp href="https://github.com/{{ site.github_username }}">GitHub</a>
         <a data-grasp href="{{ site.linkedin }}">LinkedIn</a>
       </div>
-      <p class="hint" data-hint aria-hidden="true">(the arm on the right is tracking you — hover a link)</p>
+      <p class="hint" data-hint aria-hidden="true">The arm on the right follows your cursor. Hover a link and it reaches for it.</p>
     </div>
     {% include gripper-cell.html %}
   </div>
@@ -24,9 +24,9 @@ description: "I write low-level software for hardware that has to know where it 
 
 <section id="pusht"><div class="wrap">
   <p class="eyebrow">Imitation learning · lerobot-il</p>
-  <p class="hint">A policy I trained failing, then succeeding, because of one number I changed at inference time. Drag the slider yourself.</p>
+  <p class="hint">This is a policy I trained. Drag the slider to change one inference-time setting and watch it go from failing to working.</p>
   <h2>The same checkpoint scores 0% or 34%, depending on how often it's allowed to look.</h2>
-  <p class="lede">I trained an ACT policy on the Push-T benchmark and my first evaluation came back at <strong>0.0% success</strong>. Instead of retraining, I watched the videos. The policy was executing a 100-step action chunk open-loop, overshooting the goal and never looking again in time to correct. Nothing was wrong with the weights. The library's default execution horizon was the problem.</p>
+  <p class="lede">I trained an ACT policy on the Push-T benchmark and my first eval came back at <strong>0% success</strong>. Before retraining anything I sat and watched the rollout videos. The policy was running a 100-step action chunk open-loop, so it overshot the goal and never looked again in time to correct. The weights were fine. The library's default execution horizon was what was wrong.</p>
 
   {% include pusht-figure.html %}
 
@@ -34,7 +34,7 @@ description: "I write low-level software for hardware that has to know where it 
 </div></section>
 <section id="work"><div class="wrap">
   <h2>Selected work</h2>
-  <p class="lede">Every project here has something you can run, watch, or read the source of — no screenshots standing in for demos. The badge on the right says what kind of artifact you get.</p>
+  <p class="lede">Each of these has something you can actually run, watch or read. The badge on the right tells you which.</p>
 
   <div class="work">
 {%- for p in site.data.projects %}
@@ -82,8 +82,7 @@ description: "I write low-level software for hardware that has to know where it 
         <div class="when">Sep — Dec 2023</div>
       </div>
       <ul>
-        <li>Built a thermal-image person-detection pipeline with YOLOv6 on the Teledyne FLIR dataset, targeting zero-visibility search for first responders.</li>
-        <li>Selected for an oversubscribed project on the strength of prior hands-on XR work.</li>
+        <li>Built a person-detection pipeline for thermal images with YOLOv6 on the Teledyne FLIR dataset, aimed at search in zero visibility.</li>
       </ul>
     </div>
 
@@ -103,7 +102,7 @@ description: "I write low-level software for hardware that has to know where it 
 
 <section id="patents"><div class="wrap">
   <h2>Patents</h2>
-  <p class="lede">Two applications, from the network telemetry work at Aviz.</p>
+  <p class="lede">Both came out of the telemetry work at Aviz.</p>
   <div class="patents">
     <div class="patent">
       <h3><a href="https://patents.justia.com/patent/20250148289">System and Method of LLM Training for Network State Conversational Analytics</a></h3>
