@@ -4,14 +4,17 @@ title: Blog
 description: "Write-ups from things I've built, mostly robot learning and low-level debugging."
 ---
 <section><div class="wrap">
-  <p class="eyebrow">Blog</p>
+  <h1 class="pagetitle">Blog</h1>
   <h2>Things I built or broke.</h2>
   <p class="lede">Short write-ups, with the numbers attached.</p>
 
   <div class="notelist">
     {% for post in site.posts %}
     <a class="note-row card" href="{{ post.url | relative_url }}">
-      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %b %Y" }}</time>
+      <div class="when">
+        <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %b %Y" }}</time>
+        {%- if post.reading %}<span class="read">{{ post.reading }}</span>{% endif %}
+      </div>
       <div>
         <h3>{{ post.title }}</h3>
         <p>{{ post.description | default: post.excerpt | strip_html | truncate: 180 }}</p>

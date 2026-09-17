@@ -44,7 +44,8 @@
     firmware to the 3D viewer, for under $500. It's the first project where I own
     the whole stack, soldering included.
   badge:
-    label: Build log
+    label: Source
+    href: https://github.com/Saksham2703/echoGlove
 
 
 - name: Holos
