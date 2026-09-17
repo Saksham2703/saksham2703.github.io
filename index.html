@@ -34,13 +34,19 @@ description: "I write low-level software for hardware that has to know where it 
         <div class="stage-tags">{% for t in p.tags %}<span>{{ t }}</span>{% endfor %}</div>
       </div>
       <p>{{ p.blurb }}</p>
+      <div class="artifacts">
+{%- assign badges = "" | split: "" | push: p.badge %}
+{%- if p.more %}{% assign badges = badges | push: p.more %}{% endif %}
+{%- for b in badges %}
 {%- assign cls = 'artifact' %}
-{%- if p.badge.kind %}{% assign cls = cls | append: ' ' | append: p.badge.kind %}{% endif %}
-{%- if p.badge.href %}
-      <a class="{{ cls }}" href="{{ p.badge.href }}">{{ p.badge.label }}</a>
+{%- if b.kind %}{% assign cls = cls | append: ' ' | append: b.kind %}{% endif %}
+{%- if b.href %}
+        <a class="{{ cls }}" href="{{ b.href }}">{{ b.label }}</a>
 {%- else %}
-      <span class="{{ cls }}">{{ p.badge.label }}</span>
+        <span class="{{ cls }}">{{ b.label }}</span>
 {%- endif %}
+{%- endfor %}
+      </div>
     </div>
 {%- endfor %}
   </div>

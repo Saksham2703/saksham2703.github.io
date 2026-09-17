@@ -8,6 +8,7 @@
 #   badge  label, plus:
 #            kind  live (accent) | video (muted) | omit for default
 #            href  omit to render a non-clickable badge
+#   more   optional second badge, same shape, shown under the first
 
 - name: Orion
   meta: 2026 · Google × Qualcomm
@@ -19,6 +20,9 @@
   badge:
     label: Site
     href: https://orionassistanthack.github.io/Orion/
+  more:
+    label: Write-up
+    href: /blog/an-agent-that-drives-your-phone/
 
 
 - name: LeviTap

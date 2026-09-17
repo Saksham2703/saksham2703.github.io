@@ -24,11 +24,11 @@ Every cycle does three things.
 
 **Act.** The accessibility service performs the click on the node. If the node won't take a click, it falls back to a tap gesture at the node's centre. Then the loop runs again.
 
-A cycle takes somewhere between half a second and two and a half seconds depending on the phone. That is slow for a UI, but fast enough that watching it work is fun rather than painful.
+A cycle takes somewhere between half a second and two and a half seconds on the Galaxy S26+ we demoed on. That is slow for a UI, but fast enough that watching it work is fun rather than painful.
 
 ## The NPU that wasn't
 
-The plan was to run Gemma on the NPU, and the README still says so. Text-only prompts ran fine there. The moment we sent a screenshot along with the prompt, the NPU path stopped working, and we never found out why. Our best guess was a problem on the Qualcomm or LiteRT-LM side, but that's a guess. Debugging it properly would have eaten hours we didn't have, so I cut the backend list down to the GPU and moved on.
+The plan was to run Gemma on the NPU, and the README still says so. Text-only prompts ran fine there, though the answers were noticeably worse than the same model on the GPU. The moment we sent a screenshot along with the prompt, the NPU path stopped working, and we never found out why. Our best guess was a problem on the Qualcomm or LiteRT-LM side, but that's a guess. Debugging it properly would have eaten hours we didn't have, so I cut the backend list down to the GPU and moved on.
 
 It's the one thing from the hackathon I'd still like an answer to, because every cycle sends an image and latency shaped every other decision we made.
 
@@ -50,7 +50,7 @@ The keyboard was its own saga. We tried detecting it from the accessibility serv
 
 ## The demo we hadn't rehearsed
 
-Comparison mode was the thing we'd practised. In front of the judges, someone asked for something else: install Clash Royale. That's the "Open Anything" path, where there's no state machine and no app entry, just the goal and the loop.
+Comparison mode was the thing we'd practised. During the presentation we tried something we hadn't, live in front of the judges: install Clash Royale. That's the "Open Anything" path, where there's no state machine and no app entry, just the goal and the loop.
 
 It went to the Play Store, tapped the search field, typed the name, and on the results page an ad had landed on top of the listing. It dismissed the ad, found the real listing, and tapped Install. Nothing in the code knows what the Play Store is or what an ad looks like. That was the moment I stopped thinking of it as a demo.
 
@@ -66,6 +66,6 @@ We want Orion to be what OpenClaw is for desktops: an open framework where the a
 
 Every cycle currently sends the screenshot. Most of the time the node list alone is enough to pick the next tap, and the image is the expensive part of inference. The day after the hackathon I wrote a plan for a text-first pass that only escalates to the screenshot when the text-only answer isn't confident. It isn't built. It's the first thing I'd build.
 
-One teammate spent part of the hackathon porting Qwen 2.5-VL to LiteRT-LM, with the export tooling, so a vision-language model would be an option on the same runtime. That work is at [Qwen-on-device](https://github.com/IamShubhamGupto/Qwen-on-device).
+One teammate spent part of the hackathon porting Qwen 2.5-VL to LiteRT-LM, with the export tooling, so a vision-language model would be an option on the same runtime. That work isn't public yet.
 
 Orion was built by Saksham Jain, Aneesh Bhattacharya, Shubham Gupta, Prateek Sengar and Ajit Chourasia.
