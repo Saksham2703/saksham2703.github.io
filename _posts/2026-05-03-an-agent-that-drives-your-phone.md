@@ -1,7 +1,7 @@
 ---
 title: "An agent that drives your phone, built in a day"
 description: "Orion reads the screen, asks a model running on the phone what to tap, and taps it. The model was the easy part. The loop around it was not."
-reading: "7 min"
+reading: "8 min"
 ---
 
 ## What we built
@@ -26,9 +26,9 @@ Every cycle does three things.
 
 A cycle takes somewhere between half a second and two and a half seconds depending on the phone. That is slow for a UI, but fast enough that watching it work is fun rather than painful.
 
-## Why it runs on the GPU
+## The NPU that wasn't
 
-The plan was to run Gemma on the NPU, and the README still says so. Text-only prompts ran fine there. The moment we sent a screenshot along with the prompt, the NPU path stopped working, and we never found out why. Our best guess was a problem on the Qualcomm or LiteRT-LM side, but that's a guess. Debugging it properly would have eaten hours we didn't have, so on the first night I cut the backend list down to the GPU and moved on.
+The plan was to run Gemma on the NPU, and the README still says so. Text-only prompts ran fine there. The moment we sent a screenshot along with the prompt, the NPU path stopped working, and we never found out why. Our best guess was a problem on the Qualcomm or LiteRT-LM side, but that's a guess. Debugging it properly would have eaten hours we didn't have, so I cut the backend list down to the GPU and moved on.
 
 It's the one thing from the hackathon I'd still like an answer to, because every cycle sends an image and latency shaped every other decision we made.
 
@@ -48,6 +48,12 @@ Almost every bug I fixed over the 24 hours was the loop acting on a screen that 
 
 The keyboard was its own saga. We tried detecting it from the accessibility service, reverted that within the hour, and ended up asking the model itself: "do you see a QWERTY layout?" If it says no, typing is forbidden and it has to tap a field first. That's dumber than a real keyboard check and it worked better.
 
+## The demo we hadn't rehearsed
+
+Comparison mode was the thing we'd practised. In front of the judges, someone asked for something else: install Clash Royale. That's the "Open Anything" path, where there's no state machine and no app entry, just the goal and the loop.
+
+It went to the Play Store, tapped the search field, typed the name, and on the results page an ad had landed on top of the listing. It dismissed the ad, found the real listing, and tapped Install. Nothing in the code knows what the Play Store is or what an ad looks like. That was the moment I stopped thinking of it as a demo.
+
 ## Comparison mode
 
 The ride comparison isn't special-cased in the loop. Each app is a data entry: package name, deep link scheme, whether its text fields accept a direct set-text call or need real keystrokes, and what its destination field is labelled. A small state machine opens the apps in turn, waits until the model's extracted data contains a real fare, records it, and moves to the next app. When every installed app has reported, the overlay ranks them by price or by ETA depending on whether you asked for "cheapest" or "fastest".
@@ -62,4 +68,4 @@ Every cycle currently sends the screenshot. Most of the time the node list alone
 
 One teammate spent part of the hackathon porting Qwen 2.5-VL to LiteRT-LM, with the export tooling, so a vision-language model would be an option on the same runtime. That work is at [Qwen-on-device](https://github.com/IamShubhamGupto/Qwen-on-device).
 
-Orion was built by Aneesh Bhattacharya, Saksham Jain, Shubham Gupta, Prateek Sengar and Ajit Chourasia.
+Orion was built by Saksham Jain, Aneesh Bhattacharya, Shubham Gupta, Prateek Sengar and Ajit Chourasia.
