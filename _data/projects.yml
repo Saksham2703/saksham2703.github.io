@@ -58,9 +58,9 @@
     hadn't rehearsed.
   facts: MIT licensed · open source
   badge:
-    label: Demo video
-    kind: video
-    href: /assets/video/orion.mp4
+    label: Site
+    kind: live
+    href: https://orionassistanthack.github.io/Orion/
 
 - name: Thermal person detection
   meta: 2023 · WiNGS Lab, UW–Madison
