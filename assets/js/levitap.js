@@ -16,6 +16,7 @@
   const CONF = 0.8;
   const PINCH_ON = 0.35;    // thumb-index gap / hand size, below = pinch
   const PINCH_OFF = 0.5;    // above = release (hysteresis)
+  const PINCH_FREEZE = 0.7; // below = fingers closing, cursor locks in place
   const SMOOTH = 0.35;      // cursor EMA factor per frame
   const BAND = [0.2, 0.8];  // fraction of the frame mapped to the full viewport
   const SCROLL_GAIN = 2.5;  // viewport heights scrolled per frame height of hand travel
@@ -58,8 +59,8 @@
     panel('<p><b>Control this page with your hand.</b> This turns on your camera and ' +
           'runs hand tracking entirely in your browser. No video is uploaded, recorded ' +
           'or sent anywhere, including to me.</p>' +
-          '<p>Point to move, pinch to click, hold up two fingers and move your hand ' +
-          'to scroll. Esc turns it off.</p>' +
+          '<p>Move your hand to move the cursor, pinch thumb and index to click, hold up ' +
+          'two fingers and move your hand to scroll. Esc turns it off.</p>' +
           '<button class="go" id="lt-go">Turn on camera</button> ' +
           '<button id="lt-no">Cancel</button>');
     box.querySelector('#lt-no').onclick = hide;
@@ -99,7 +100,7 @@
     video.autoplay = true; video.playsInline = true; video.muted = true;
     video.srcObject = st.stream;
     const hint = document.createElement('p');
-    hint.textContent = 'point · pinch to click · two fingers to scroll · Esc to stop';
+    hint.textContent = 'move hand · pinch to click · two fingers to scroll · Esc to stop';
     cam.append(video, hint);
     document.body.appendChild(cam);
 
@@ -140,9 +141,11 @@
     st.on = false;
     cancelAnimationFrame(st.raf);
     if (st.stream) st.stream.getTracks().forEach((t) => t.stop());
+    if (st.hover) st.hover.dispatchEvent(new PointerEvent('pointerleave'));
+    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
     st.cam?.remove();
     st.cursor?.remove();
-    st.stream = st.video = st.cam = st.cursor = null;
+    st.stream = st.video = st.cam = st.cursor = st.hover = null;
     BTN.classList.remove('on');
     label('Hand control');
   }
@@ -155,12 +158,14 @@
 
   // A finger counts as extended when its tip is further from the wrist than
   // its PIP joint, which holds for any hand orientation the camera will see.
+  // The cursor is driven by the index knuckle (MCP), not the fingertip: the
+  // knuckle barely moves when you pinch, so the click lands where you aimed.
   function readHand(lm) {
     const wrist = lm[0];
     const size = dist(wrist, lm[9]) || 1e-6;          // wrist to middle MCP
     const ext = (tip, pip) => dist(lm[tip], wrist) > dist(lm[pip], wrist) * 1.1;
     return {
-      tip: lm[8],
+      point: lm[5],
       anchor: lm[9],
       pinch: dist(lm[4], lm[8]) / size,
       index: ext(8, 6), middle: ext(12, 10), ring: ext(16, 14), pinky: ext(20, 18)
@@ -173,6 +178,10 @@
     const cur = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let pinching = false;
     let scrollAnchor = null;
+    let hover = null;
+    const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
+      clientX: cur.x, clientY: cur.y, button: 0, bubbles: type !== 'pointerenter' && type !== 'pointerleave'
+    }));
 
     return function frame() {
       if (!st.on) return;
@@ -184,31 +193,47 @@
       const lm = res.landmarks && res.landmarks[0];
       if (!lm) {
         cursor.classList.add('lost');
+        if (pinching) pointer('pointerup', document);
+        if (hover) { pointer('pointerleave', hover); hover = st.hover = null; }
         pinching = false; scrollAnchor = null;
         return;
       }
       cursor.classList.remove('lost');
       const h = readHand(lm);
 
-      // Cursor follows the index tip. The preview is mirrored, so flip x.
-      const tx = band(1 - h.tip.x) * window.innerWidth;
-      const ty = band(h.tip.y) * window.innerHeight;
-      cur.x += (tx - cur.x) * SMOOTH;
-      cur.y += (ty - cur.y) * SMOOTH;
-      cursor.style.transform = `translate(${cur.x}px, ${cur.y}px)`;
+      // Cursor follows the index knuckle, and freezes as soon as the thumb
+      // starts closing in so the pinch itself can't drag it off target.
+      // The preview is mirrored, so flip x.
+      if (h.pinch >= PINCH_FREEZE && !pinching) {
+        const tx = band(1 - h.point.x) * window.innerWidth;
+        const ty = band(h.point.y) * window.innerHeight;
+        cur.x += (tx - cur.x) * SMOOTH;
+        cur.y += (ty - cur.y) * SMOOTH;
+        cursor.style.transform = `translate(${cur.x}px, ${cur.y}px)`;
+        pointer('pointermove', document);
+      }
 
       const under = document.elementFromPoint(cur.x, cur.y);
       const target = under && under.closest(CLICKABLE);
       cursor.classList.toggle('over', !!target);
+      if (target !== hover) {
+        // Hand the hover to anything listening for a real pointer, such as
+        // the arm in the hero, which plans a grasp on pointerenter.
+        if (hover) pointer('pointerleave', hover);
+        if (target) pointer('pointerenter', target);
+        hover = st.hover = target;
+      }
 
       // Pinch with hysteresis; click on the closing edge.
       const wasPinching = pinching;
       pinching = pinching ? h.pinch < PINCH_OFF : h.pinch < PINCH_ON;
       cursor.classList.toggle('pinch', pinching);
       if (pinching && !wasPinching && target) {
+        pointer('pointerdown', target);
         target.focus?.({ preventScroll: true });
         target.click();
       }
+      if (!pinching && wasPinching) pointer('pointerup', document);
 
       // Two fingers up (index + middle, ring + pinky folded): vertical hand
       // travel scrolls the page, content following the hand like a trackpad.
