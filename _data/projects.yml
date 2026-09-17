@@ -56,8 +56,8 @@
     ask a question out loud and get a spoken answer. We went through three
     grab-interaction SDKs before one worked.
   badge:
-    label: Screenshot
-    href: /assets/img/holos.jpg
+    label: Source
+    href: https://github.com/Nishanth3101/CS639-Holos-1
 
 - name: Thermal person detection
   meta: 2023 · WiNGS Lab, UW–Madison
