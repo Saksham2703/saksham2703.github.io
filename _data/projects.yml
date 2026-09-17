@@ -18,7 +18,6 @@
     hadn't rehearsed.
   badge:
     label: Site
-    kind: live
     href: https://orionassistanthack.github.io/Orion/
 
 
@@ -81,6 +80,5 @@
     a breakdown of how each one fails, because the success rate alone was hiding it.
   badge:
     label: Interactive write-up
-    kind: live
     href: /blog/a-library-default-cost-me-the-result/
 
