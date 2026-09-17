@@ -20,9 +20,9 @@
     a breakdown of how each one fails, because the success rate alone was hiding it.
   facts: 4 policies · 13 eval runs · 1 upstream bug
   badge:
-    label: Interactive ↑
+    label: Interactive write-up
     kind: live
-    href: "#pusht"
+    href: /blog/a-library-default-cost-me-the-result/
 
 - name: EchoGlove
   meta: 2026 · in progress

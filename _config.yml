@@ -6,7 +6,7 @@ linkedin: https://www.linkedin.com/in/saksham-jain-978189239/
 url: "https://saksham2703.github.io"
 baseurl: ""
 
-permalink: /notes/:title/
+permalink: /blog/:title/
 markdown: kramdown
 plugins:
   - jekyll-feed

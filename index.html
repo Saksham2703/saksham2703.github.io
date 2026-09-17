@@ -22,16 +22,6 @@ description: "I write low-level software for hardware that has to know where it 
   </div>
 </div>
 
-<section id="pusht"><div class="wrap">
-  <p class="eyebrow">Imitation learning · lerobot-il</p>
-  <p class="hint">This is a policy I trained. Drag the slider to change one inference-time setting and watch it go from failing to working.</p>
-  <h2>The same checkpoint scores 0% or 34%, depending on how often it's allowed to look.</h2>
-  <p class="lede">I trained an ACT policy on the Push-T benchmark and my first eval came back at <strong>0% success</strong>. Before retraining anything I sat and watched the rollout videos. The policy was running a 100-step action chunk open-loop, so it overshot the goal and never looked again in time to correct. The weights were fine. The library's default execution horizon was what was wrong.</p>
-
-  {% include pusht-figure.html %}
-
-  <p class="caveat">Fifty episodes is a small sample. At 34% the error bar is about ±6.5 points, so I can't say this beats my diffusion baseline at 30%. Every run here also stopped at 250 epochs, half the reference training budget. What the slider does show is that changing one inference-time setting took the same checkpoint from 0% to 34%. <a href="{{ '/notes/a-library-default-cost-me-the-result/' | relative_url }}">Full write-up in my notes.</a></p>
-</div></section>
 <section id="work"><div class="wrap">
   <h2>Selected work</h2>
   <p class="lede">Each of these has something you can actually run, watch or read. The badge on the right tells you which.</p>
