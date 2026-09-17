@@ -10,6 +10,8 @@ At the Google × Qualcomm hackathon this spring, five of us built Orion: an agen
 
 There are no integrations. No Uber API, no Lyft SDK. Orion only ever sees what's on the screen and taps what a thumb could tap. And the model doing the deciding runs on the phone itself, so nothing about your screen leaves the device.
 
+The pitch we kept coming back to was "OpenClaw for phones". OpenClaw gave people a framework for agents that drive a desktop. Nothing like it existed for the phone, which is the computer most people actually use, and the pieces were finally there: a model small enough to run locally, a runtime that could load it, and accessibility APIs that have quietly allowed this kind of automation for years. Orion is the layer that ties them together.
+
 The team wrote up the [project site](https://orionassistanthack.github.io/Orion/) with the demo video. This post is my side of it: the loop, and what broke.
 
 ## The loop
@@ -24,11 +26,11 @@ Every cycle does three things.
 
 A cycle takes somewhere between half a second and two and a half seconds depending on the phone. That is slow for a UI, but fast enough that watching it work is fun rather than painful.
 
-## The NPU that wasn't
+## Why it runs on the GPU
 
-The plan was to run Gemma on the Hexagon NPU. The README still says so. The backend list in the first commits was NPU, then GPU, then CPU as fallbacks. We couldn't get the NPU path working reliably on our test phone in the time we had, so late on the first night I cut the list down to the GPU and moved on. The site says "no NPU required", which is the polite version.
+The plan was to run Gemma on the NPU, and the README still says so. Text-only prompts ran fine there. The moment we sent a screenshot along with the prompt, the NPU path stopped working, and we never found out why. Our best guess was a problem on the Qualcomm or LiteRT-LM side, but that's a guess. Debugging it properly would have eaten hours we didn't have, so on the first night I cut the backend list down to the GPU and moved on.
 
-I'd still like to know how much the NPU would have bought us, because latency was the thing that shaped every other decision.
+It's the one thing from the hackathon I'd still like an answer to, because every cycle sends an image and latency shaped every other decision we made.
 
 ## The model was fine. The loop was the problem.
 
@@ -52,7 +54,9 @@ The ride comparison isn't special-cased in the loop. Each app is a data entry: p
 
 Adding a fourth app is one more entry in the list.
 
-## What I'd do next
+## Where this goes
+
+We want Orion to be what OpenClaw is for desktops: an open framework where the agent loop is done once and anyone can add an app, swap the model, or build a different use case on the same perceive-reason-act foundation. Booking travel, filling forms, watching prices across shopping apps. The loop doesn't care what app it's driving. That's the point.
 
 Every cycle currently sends the screenshot. Most of the time the node list alone is enough to pick the next tap, and the image is the expensive part of inference. The day after the hackathon I wrote a plan for a text-first pass that only escalates to the screenshot when the text-only answer isn't confident. It isn't built. It's the first thing I'd build.
 
