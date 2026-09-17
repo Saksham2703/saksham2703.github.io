@@ -60,6 +60,7 @@
   badge:
     label: Demo video
     kind: video
+    href: /assets/video/orion.mp4
 
 - name: Thermal person detection
   meta: 2023 · WiNGS Lab, UW–Madison
@@ -82,5 +83,5 @@
     grab-interaction SDKs before one worked.
   facts: Team of 5 · companion React site
   badge:
-    label: Demo
-    kind: video
+    label: Screenshot
+    href: /assets/img/holos.jpg
