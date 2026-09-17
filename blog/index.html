@@ -10,7 +10,7 @@ description: "Write-ups from things I've built, mostly robot learning and low-le
 
   <div class="notelist">
     {% for post in site.posts %}
-    <a class="note-row" href="{{ post.url | relative_url }}">
+    <a class="note-row card" href="{{ post.url | relative_url }}">
       <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %b %Y" }}</time>
       <div>
         <h3>{{ post.title }}</h3>

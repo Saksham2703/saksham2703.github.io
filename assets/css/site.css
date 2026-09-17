@@ -178,17 +178,20 @@ svg.sweep text{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabu
 footer{padding:44px 0 70px}
 .social{list-style:none; margin:0; padding:0; display:flex; gap:18px; flex-wrap:wrap}
 .social a{
-  display:flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:50%;
-  background:var(--surface); border:1px solid var(--line-2); box-shadow:var(--shadow); color:var(--ink);
+  display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--line-2); box-shadow:var(--shadow); color:var(--ink-2);
   transition:transform .18s ease, border-color .18s ease, color .18s ease;
 }
 .social a:hover, .social a:focus-visible{transform:translateY(-2px); border-color:var(--accent); color:var(--accent); outline:none}
-.social svg{width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+.social svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
 
 @media (max-width:880px){
   .rig{grid-template-columns:1fr}
   .stage{border-right:0; border-bottom:1px solid var(--line); min-height:300px}
   .row{grid-template-columns:1fr; gap:12px}
+  .card{padding:18px 20px}
+  .notelist a.note-row{grid-template-columns:1fr; gap:6px}
+  article.note .col.card{padding:20px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
 
@@ -198,10 +201,9 @@ footer{padding:44px 0 70px}
 button.handbtn{font-family:"JetBrains Mono",monospace}
 button.handbtn:not([disabled]){cursor:pointer; color:var(--ink-2)}
 
-.notelist{display:flex; flex-direction:column; border-top:1px solid var(--line)}
+.notelist{display:flex; flex-direction:column; gap:14px}
 .notelist a.note-row{
   display:grid; grid-template-columns:130px minmax(0,1fr); gap:24px;
-  padding:22px 0; border-bottom:1px solid var(--line);
   text-decoration:none; color:inherit; align-items:baseline;
 }
 .notelist a.note-row:hover h3{color:var(--accent)}
@@ -211,6 +213,9 @@ button.handbtn:not([disabled]){cursor:pointer; color:var(--ink-2)}
 
 article.note{padding:56px 0}
 article.note .col{max-width:none}
+article.note .col.card{padding:28px 32px}
+article.note .col.card > :first-child{margin-top:0}
+article.note .col.card > :last-child{margin-bottom:0}
 
 article.note h1{font-size:clamp(28px,4vw,40px); line-height:1.15; text-wrap:pretty; letter-spacing:-.015em; margin:0 0 10px}
 article.note .meta{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--ink-3); margin:0 0 30px}
