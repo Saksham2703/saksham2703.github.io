@@ -5,7 +5,6 @@
 #   meta   the small mono line beside the title (year · context)
 #   tags   chips under the title; keep to three
 #   blurb  the description paragraph
-#   facts  optional mono line under the blurb
 #   badge  label, plus:
 #            kind  live (accent) | video (muted) | omit for default
 #            href  omit to render a non-clickable badge
@@ -17,7 +16,6 @@
     An agent that operates an Android phone, with the model running on the phone
     itself. Built in 24 hours, and in front of the judges it handled a task we
     hadn't rehearsed.
-  facts: MIT licensed · open source
   badge:
     label: Site
     kind: live
@@ -32,7 +30,6 @@
     both clicks, scroll and speech-to-text, six gestures read off 21 hand landmarks
     at 30 fps. We built it after a teammate's mom cut her finger cooking and
     couldn't use her laptop.
-  facts: levitap.tech · macOS &amp; Windows installers
   badge:
     label: Source
     href: https://github.com/Saksham2703/madHacks-2023
@@ -46,7 +43,6 @@
     ToF and an IMU, fused. I'm doing all of it myself, from the parts list to the
     firmware to the 3D viewer, for under $500. It's the first project where I own
     the whole stack, soldering included.
-  facts: Build log · phase specs · learnings
   badge:
     label: Build log
 
@@ -58,7 +54,6 @@
     A VR anatomy app for the Quest 3. You pull a skeleton apart with your hands,
     ask a question out loud and get a spoken answer. We went through three
     grab-interaction SDKs before one worked.
-  facts: Team of 5 · companion React site
   badge:
     label: Screenshot
     href: /assets/img/holos.jpg
@@ -70,7 +65,6 @@
     Detecting people in thermal imagery so first responders can search in darkness
     and smoke, where normal cameras are useless. Undergraduate research with Prof.
     Suman Banerjee.
-  facts: Teledyne FLIR dataset
   badge:
     label: Detection reel
     kind: video
@@ -84,7 +78,6 @@
     index-aliasing bug in Hugging Face's LeRobot sampler in about two weeks. Four
     policies trained from scratch on a rented A10 with the same epoch budget, plus
     a breakdown of how each one fails, because the success rate alone was hiding it.
-  facts: 4 policies · 13 eval runs · 1 upstream bug
   badge:
     label: Interactive write-up
     kind: live

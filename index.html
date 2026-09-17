@@ -33,8 +33,7 @@ description: "I write low-level software for hardware that has to know where it 
         <h3>{{ p.name }} <span class="yr">{{ p.meta }}</span></h3>
         <div class="stage-tags">{% for t in p.tags %}<span>{{ t }}</span>{% endfor %}</div>
       </div>
-      <p>{{ p.blurb }}{% if p.facts %}
-        <br><span class="num">{{ p.facts }}</span>{% endif %}</p>
+      <p>{{ p.blurb }}</p>
 {%- assign cls = 'artifact' %}
 {%- if p.badge.kind %}{% assign cls = cls | append: ' ' | append: p.badge.kind %}{% endif %}
 {%- if p.badge.href %}
