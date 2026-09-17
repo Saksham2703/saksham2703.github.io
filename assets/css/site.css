@@ -215,7 +215,10 @@ article.note .col{max-width:none}
 
 article.note h1{font-size:clamp(28px,4vw,40px); line-height:1.15; text-wrap:pretty; letter-spacing:-.015em; margin:0 0 10px}
 article.note .meta{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--ink-3); margin:0 0 30px}
-article.note h2{font-size:23px; margin:38px 0 12px}
+article.note h2{
+  font-size:23px; margin:38px 0 14px;
+  padding-bottom:7px; border-bottom:1px solid var(--line);
+}
 article.note p{margin:0 0 17px; font-size:17.5px}
 article.note pre{
   overflow-x:auto; background:var(--surface); border:1px solid var(--line);
