@@ -30,8 +30,8 @@
   blurb: >-
     A camera-free hand-tracking glove fusing MEMS ultrasonic time-of-flight, IR
     laser ToF and IMU. Bill of materials to firmware to a real-time 3D viewer,
-    solo, under $500. First project where I own the whole stack — including the
-    soldering iron, which I had never picked up.
+    solo, under $500. First project where I own the whole stack, down to the
+    soldering iron.
   facts: Build log · phase specs · learnings
   badge:
     label: Build log
@@ -42,7 +42,7 @@
   blurb: >-
     Control a computer with your hands and a stock 640×480 webcam — cursor, both
     clicks, scroll, and speech-to-text, six gestures decoded from 21 landmarks at
-    30fps. Built because a teammate's mum cut her finger cooking and couldn't use
+    30fps. Built because a teammate's mom cut her finger cooking and couldn't use
     her laptop.
   facts: levitap.tech · macOS &amp; Windows installers
   badge:

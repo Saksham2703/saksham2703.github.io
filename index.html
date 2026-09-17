@@ -9,9 +9,8 @@ description: "I write low-level software for hardware that has to know where it 
       <div class="pipeline">
         <span>Sense</span><i>→</i><span>Perceive</span><i>→</i><span>Decide</span><i>→</i><span>Act</span>
       </div>
-      <h1>I write low-level software for hardware that has to <em>know where it is</em>.</h1>
+      <h1>I'm Saksham Jain.<br>I write low-level software for hardware that has to <em>know where it is</em>.</h1>
       <p>Two years of Linux drivers, board bring-up and multi-sensor tracking pipelines for AR glasses at <strong>Rivet Industries</strong>. Nights and weekends: teaching myself imitation learning, and soldering a hand-tracking glove that doesn't use cameras.</p>
-      <p>Below is a policy I trained failing, and then succeeding, because of one number I changed at inference time. Drag it yourself.</p>
       <div class="cta">
         <a data-grasp href="mailto:{{ site.email }}">Email</a>
         <a data-grasp href="https://github.com/{{ site.github_username }}">GitHub</a>
@@ -25,6 +24,7 @@ description: "I write low-level software for hardware that has to know where it 
 
 <section id="pusht"><div class="wrap">
   <p class="eyebrow">Imitation learning · lerobot-il</p>
+  <p class="hint">A policy I trained failing, then succeeding, because of one number I changed at inference time. Drag the slider yourself.</p>
   <h2>The same checkpoint scores 0% or 34%, depending on how often it's allowed to look.</h2>
   <p class="lede">I trained an ACT policy on the Push-T benchmark and my first evaluation came back at <strong>0.0% success</strong>. Instead of retraining, I watched the videos. The policy was committing to a 100-step action chunk open-loop — overshooting the goal and never re-observing in time to correct. <strong>The weights were fine. The library's default execution horizon wasn't.</strong></p>
 
@@ -67,32 +67,12 @@ description: "I write low-level software for hardware that has to know where it 
         <div class="when">Jun 2024 — present</div>
       </div>
       <ul>
-        <li>Extended Android system services and maintained AOSP source builds (Soong/Gradle, CMake) with CI/CD-backed integration, debugging platform issues through minidumps and low-level system analysis.</li>
-        <li>Drove platform integration and performance tuning for an XR input controller, enabling microphone and camera functionality and optimising a multi-sensor tracking pipeline for compute-constrained AR glasses.</li>
-        <li>Developed and debugged Linux kernel drivers, BSP-level bring-up and embedded firmware interfaces across USB, I²C, GPIO, UVC and display/LED subsystems using UART logs, <code>dmesg</code>, <code>logcat</code> and Perfetto.</li>
-        <li>Cut mean time to diagnose thermal regressions by 25% with scripts, dashboards and automation correlating thermal telemetry against software mitigation thresholds.</li>
-        <li>Engineered Linux networking tooling for multi-device routing and forwarding, validating traffic flows with <code>tcpdump</code> and routing-rule automation.</li>
-        <li>Mentored junior engineers and interns, and interviewed candidates on software engineering and distributed systems.</li>
-      </ul>
-    </div>
-
-    <div class="job">
-      <div class="jobhead">
-        <div><h3>Department of Computer Sciences, UW–Madison</h3><div class="role">Peer Mentor, CS 540 — Introduction to AI</div></div>
-        <div class="when">Jan — May 2024</div>
-      </div>
-      <ul>
-        <li>Ran office hours and exam preparation for a 400-student course.</li>
-      </ul>
-    </div>
-
-    <div class="job">
-      <div class="jobhead">
-        <div><h3>Badger Solar Racing</h3><div class="role">Website Team Lead</div></div>
-        <div class="when">Oct 2023 — May 2024</div>
-      </div>
-      <ul>
-        <li>Owned the club website rebuild — information architecture, content and deployment — cutting manual update time ahead of competition deadlines.</li>
+        <li>I extend Android system services and keep our AOSP builds (Soong, Gradle, CMake) green through CI, and debug platform crashes from minidumps.</li>
+        <li>Integrated an XR input controller end to end, brought up its microphone and camera, and tuned a multi-sensor tracking pipeline to fit the compute budget of AR glasses.</li>
+        <li>Wrote and debugged Linux kernel drivers and board bring-up across USB, I²C, GPIO, UVC and display/LED, with UART logs, <code>dmesg</code>, <code>logcat</code> and Perfetto as the tools.</li>
+        <li>Built the scripts and dashboards that correlate thermal telemetry with our mitigation thresholds, cutting the time to diagnose a thermal regression by 25%.</li>
+        <li>Wrote Linux networking tooling for routing between devices, verified with <code>tcpdump</code>.</li>
+        <li>Mentor interns and newer engineers, and interview candidates on software engineering and distributed systems.</li>
       </ul>
     </div>
 
@@ -113,9 +93,9 @@ description: "I write low-level software for hardware that has to know where it 
         <div class="when">May — Jul 2023</div>
       </div>
       <ul>
-        <li>Designed a generative AI architecture for network state telemetry analysis reaching 97% inference accuracy; the work contributed to two patent applications.</li>
-        <li>Built conversational tooling over network telemetry datasets, turning natural-language questions into query workflows for non-technical users.</li>
-        <li>Automated recurring workflows with AWS Lambda, removing roughly 10 hours of manual work each week.</li>
+        <li>Designed the generative AI pipeline for analyzing network telemetry that reached 97% inference accuracy. It became two patent applications.</li>
+        <li>Built the conversational layer on top, so non-technical users could ask questions in plain English and get queries run for them.</li>
+        <li>Automated the recurring work with AWS Lambda, which saved about 10 hours a week.</li>
       </ul>
     </div>
   </div>
@@ -142,6 +122,7 @@ description: "I write low-level software for hardware that has to know where it 
     <div>
       <h3>University of Wisconsin–Madison</h3>
       <div class="deg">B.S. Computer Sciences, double major in Data Science · GPA 3.96 · graduated with distinction · Dean's Honors List, 5 of 6 semesters</div>
+      <div class="deg">Also: peer mentor for CS 540 (Introduction to AI, 400 students) and website lead for Badger Solar Racing.</div>
     </div>
   </div>
 </div></section>
