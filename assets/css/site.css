@@ -199,6 +199,35 @@ footer{padding:44px 0 70px}
 .wordmark a:hover{color:var(--accent)}
 button.handbtn{font-family:"JetBrains Mono",monospace}
 button.handbtn:not([disabled]){cursor:pointer; color:var(--ink-2)}
+button.handbtn.on{border-color:var(--accent); color:var(--accent)}
+button.handbtn.on .dot{background:var(--accent)}
+
+/* LeviTap in the browser */
+#levitap-cursor{
+  position:fixed; left:0; top:0; width:22px; height:22px; margin:-11px 0 0 -11px;
+  border-radius:50%; border:2px solid var(--accent); background:rgba(43,101,85,.18);
+  pointer-events:none; z-index:9999; transition:opacity .2s, width .1s, height .1s, margin .1s;
+}
+#levitap-cursor.over{width:30px; height:30px; margin:-15px 0 0 -15px}
+#levitap-cursor.pinch{background:var(--accent)}
+#levitap-cursor.scroll{border-style:dashed}
+#levitap-cursor.lost{opacity:.25}
+#levitap-consent{
+  position:fixed; right:20px; bottom:20px; max-width:340px; z-index:9998;
+  background:var(--surface); border:1px solid var(--line-2); border-radius:6px;
+  padding:18px 20px; box-shadow:var(--shadow); font-size:15px; line-height:1.5; display:none;
+}
+#levitap-consent.show{display:block}
+#levitap-consent p{margin:0 0 12px; color:var(--ink-2)}
+#levitap-consent button{
+  font-family:"JetBrains Mono",monospace; font-size:12px; padding:7px 13px;
+  border-radius:3px; border:1px solid var(--line-2); background:var(--paper);
+  color:var(--ink); cursor:pointer;
+}
+#levitap-consent button.go{background:var(--accent); border-color:var(--accent); color:#fff}
+#levitap-cam{position:fixed; left:20px; bottom:20px; width:160px; z-index:9998}
+#levitap-cam video{display:block; width:100%; border-radius:4px; border:1px solid var(--line-2); transform:scaleX(-1)}
+#levitap-cam p{margin:6px 0 0; font-family:"JetBrains Mono",monospace; font-size:10.5px; line-height:1.4; color:var(--ink-3)}
 
 .notelist{display:flex; flex-direction:column; gap:14px}
 .notelist a.note-row{

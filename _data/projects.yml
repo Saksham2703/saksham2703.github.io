@@ -36,6 +36,9 @@
   badge:
     label: Source
     href: https://github.com/Saksham2703/madHacks-2023
+  more:
+    label: Try it on this page
+    href: "#levitap-toggle"
 
 
 - name: EchoGlove
