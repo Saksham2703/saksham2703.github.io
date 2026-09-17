@@ -28,7 +28,7 @@ description: "I write low-level software for hardware that has to know where it 
 
   <div class="work">
 {%- for p in site.data.projects %}
-    <div class="row">
+    <div class="row card">
       <div>
         <h3>{{ p.name }} <span class="yr">{{ p.meta }}</span></h3>
         <div class="stage-tags">{% for t in p.tags %}<span>{{ t }}</span>{% endfor %}</div>
@@ -50,11 +50,11 @@ description: "I write low-level software for hardware that has to know where it 
   <h2>Patents</h2>
   <p class="lede">Both came out of the telemetry work at Aviz.</p>
   <div class="patents">
-    <div class="patent">
+    <div class="patent card">
       <h3><a href="https://patents.justia.com/patent/20250148289">System and Method of LLM Training for Network State Conversational Analytics</a></h3>
       <div class="no">US 20250148289</div>
     </div>
-    <div class="patent">
+    <div class="patent card">
       <h3><a href="https://patents.justia.com/patent/20250147976">Systems and Methods for Creating Generative AI Frameworks on Network State Telemetry</a></h3>
       <div class="no">US 20250147976</div>
     </div>
@@ -64,7 +64,7 @@ description: "I write low-level software for hardware that has to know where it 
   <h2>Experience</h2>
 
   <div class="xp">
-    <div class="job">
+    <div class="job card">
       <div class="jobhead">
         <div><h3>Rivet Industries</h3><div class="role">Software Engineer · Palo Alto, CA</div></div>
         <div class="when">Jun 2024 — present</div>
@@ -79,7 +79,7 @@ description: "I write low-level software for hardware that has to know where it 
       </ul>
     </div>
 
-    <div class="job">
+    <div class="job card">
       <div class="jobhead">
         <div><h3>WiNGS Lab, UW–Madison</h3><div class="role">Undergraduate Researcher · Prof. Suman Banerjee</div></div>
         <div class="when">Sep — Dec 2023</div>
@@ -89,7 +89,7 @@ description: "I write low-level software for hardware that has to know where it 
       </ul>
     </div>
 
-    <div class="job">
+    <div class="job card">
       <div class="jobhead">
         <div><h3>Aviz Networks</h3><div class="role">Software Engineering Intern · San Jose, CA</div></div>
         <div class="when">May — Jul 2023</div>
@@ -106,7 +106,7 @@ description: "I write low-level software for hardware that has to know where it 
 
 <section id="education"><div class="wrap">
   <h2>Education</h2>
-  <div class="edu">
+  <div class="edu card">
     <div>
       <h3>University of Wisconsin–Madison</h3>
       <div class="deg">B.S. Computer Sciences, double major in Data Science · GPA 3.96 · graduated with distinction · Dean's Honors List, 5 of 6 semesters</div>

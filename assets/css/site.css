@@ -148,10 +148,15 @@ svg.sweep text{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabu
 }
 .caveat b{color:var(--ink); font-weight:500}
 
-.work{display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
+/* raised cards: the same surface, border and shadow as the gripper cell, so text sits on a flat ground */
+.card{
+  background:var(--surface); border:1px solid var(--line-2); border-radius:6px;
+  box-shadow:var(--shadow); padding:22px 24px;
+}
+.work{display:flex; flex-direction:column; gap:14px}
 .row{
   display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 150px;
-  gap:26px; align-items:start; padding:24px 0; border-bottom:1px solid var(--line);
+  gap:26px; align-items:start;
 }
 .row h3{margin:0 0 5px; font-size:18.5px; font-weight:700; letter-spacing:-.01em}
 .row h3 .yr{font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--ink-3); font-weight:400; margin-left:9px}
@@ -220,8 +225,7 @@ article.note table{border-collapse:collapse; width:100%; font-size:16px}
 article.note table th,article.note table td{border-bottom:1px solid var(--line); padding:7px 10px; text-align:left}
 .tablewrap{overflow-x:auto}
 
-.xp{display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line)}
-.xp .job{padding:24px 0; border-bottom:1px solid var(--line)}
+.xp{display:flex; flex-direction:column; gap:14px}
 .xp .jobhead{display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; align-items:baseline; margin-bottom:9px}
 .xp h3{margin:0 0 3px; font-size:17.5px; font-weight:700; letter-spacing:-.008em}
 .xp .role{color:var(--ink-2); font-size:16px}
@@ -232,10 +236,7 @@ article.note table th,article.note table td{border-bottom:1px solid var(--line);
 .xp code{font-family:"JetBrains Mono",monospace; font-size:.84em; background:var(--surface-2); padding:.08em .3em; border-radius:3px}
 
 .patents{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.patent{
-  background:var(--surface); border:1px solid var(--line); border-radius:5px;
-  padding:18px 20px; display:flex; flex-direction:column; gap:8px;
-}
+.patent{display:flex; flex-direction:column; gap:8px}
 .patent h3{margin:0; font-size:16px; font-weight:700; line-height:1.35; letter-spacing:-.006em}
 .patent a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-soft)}
 .patent a:hover{border-bottom-color:var(--accent)}
