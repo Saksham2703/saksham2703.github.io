@@ -23,6 +23,8 @@
   const BAND = [0.2, 0.8];  // fraction of the frame mapped to the full viewport
   const SCROLL_GAIN = 2.5;  // viewport heights scrolled per frame height of hand travel
   const CLICKABLE = 'a,button,[role="button"],summary,label,input,select,textarea';
+  const MOUSE_HOLD_MS = 1500; // hand input pauses this long after real mouse activity
+  const SNAP = 8;             // px radius searched around the cursor for something clickable
 
   if (window.innerWidth < MIN_WIDTH || !navigator.mediaDevices?.getUserMedia) return;
 
@@ -39,6 +41,13 @@
   document.querySelectorAll('a[href$="#levitap-toggle"]').forEach((a) => {
     a.addEventListener('click', (e) => { e.preventDefault(); if (!st.on) showConsent(); });
   });
+  // A hand holding a mouse looks like a pinch, so real mouse activity pauses
+  // hand input for a moment rather than letting the two fight.
+  let lastMouse = -Infinity;
+  const noteMouse = (e) => { if (e.isTrusted) lastMouse = performance.now(); };
+  document.addEventListener('pointermove', noteMouse, { passive: true });
+  document.addEventListener('pointerdown', noteMouse, { passive: true });
+
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (st.on || st.loading)) stop(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && st.on) stop(); });
 
@@ -202,6 +211,14 @@
     const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
       clientX: cur.x, clientY: cur.y, button: 0, bubbles: type !== 'pointerenter' && type !== 'pointerleave'
     }));
+    // Small badges are easy to miss by a few pixels; look around the centre too.
+    const hit = () => {
+      for (const [dx, dy] of [[0, 0], [0, -SNAP], [0, SNAP], [-SNAP, 0], [SNAP, 0]]) {
+        const t = document.elementFromPoint(cur.x + dx, cur.y + dy)?.closest(CLICKABLE);
+        if (t) return t;
+      }
+      return null;
+    };
 
     return function frame() {
       if (!st.on) return;
@@ -219,6 +236,14 @@
         return;
       }
       cursor.classList.remove('lost');
+      const paused = performance.now() - lastMouse < MOUSE_HOLD_MS;
+      cursor.classList.toggle('paused', paused);
+      if (paused) {
+        if (pinching) pointer('pointerup', document);
+        if (hover) { pointer('pointerleave', hover); hover = st.hover = null; }
+        pinching = false; scrollAnchor = null;
+        return;
+      }
       const h = readHand(lm, res.worldLandmarks && res.worldLandmarks[0]);
 
       // Cursor follows the index knuckle, and freezes as soon as the thumb
@@ -233,8 +258,7 @@
         pointer('pointermove', document);
       }
 
-      const under = document.elementFromPoint(cur.x, cur.y);
-      const target = under && under.closest(CLICKABLE);
+      const target = hit();
       cursor.classList.toggle('over', !!target);
       if (target !== hover) {
         // Hand the hover to anything listening for a real pointer, such as
