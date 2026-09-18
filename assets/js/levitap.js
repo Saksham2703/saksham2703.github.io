@@ -207,6 +207,7 @@
     const cur = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let pinching = false;
     let scrollAnchor = null;
+    let scrollDebt = 0; // fractional pixels carried over: Safari's hit-testing desyncs on fractional scrolls
     let hover = null;
     const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
       clientX: cur.x, clientY: cur.y, button: 0, bubbles: type !== 'pointerenter' && type !== 'pointerleave'
@@ -294,7 +295,9 @@
       cursor.classList.toggle('scroll', twoUp);
       if (twoUp) {
         if (scrollAnchor !== null) {
-          window.scrollBy(0, (scrollAnchor - h.anchor.y) * window.innerHeight * SCROLL_GAIN);
+          scrollDebt += (scrollAnchor - h.anchor.y) * window.innerHeight * SCROLL_GAIN;
+          const whole = Math.trunc(scrollDebt);
+          if (whole) { window.scrollBy(0, whole); scrollDebt -= whole; }
         }
         scrollAnchor = h.anchor.y;
       } else {
