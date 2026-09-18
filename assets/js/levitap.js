@@ -208,6 +208,7 @@
     let pinching = false;
     let scrollAnchor = null;
     let scrollGoal = 0;     // where the gesture wants the page
+    let scrollPos = 0;      // where the page was last sent; Safari reports scrollY late
     let scrollAt = 0;       // time of the last scroll request
     let hover = null;
     const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
@@ -296,7 +297,7 @@
       const twoUp = !pinching && h.index && h.middle && !h.ring && !h.pinky;
       cursor.classList.toggle('scroll', twoUp);
       if (twoUp) {
-        if (scrollAnchor === null) scrollGoal = window.scrollY;
+        if (scrollAnchor === null) scrollGoal = scrollPos = window.scrollY;
         else {
           scrollGoal += (scrollAnchor - h.anchor.y) * window.innerHeight * SCROLL_GAIN;
           const max = document.documentElement.scrollHeight - window.innerHeight;
@@ -305,9 +306,10 @@
           // page is scrolled every frame, and can be left hit-testing at a
           // stale offset. So ask at most every 40 ms, each tick easing halfway
           // to the goal so the steps read as a glide.
-          const gap = scrollGoal - window.scrollY;
+          const gap = scrollGoal - scrollPos;
           if (now - scrollAt >= 40 && Math.abs(gap) >= 4) {
-            window.scrollTo(0, Math.round(window.scrollY + gap * 0.5));
+            scrollPos = Math.round(scrollPos + gap * 0.5);
+            window.scrollTo(0, scrollPos);
             scrollAt = now;
           }
         }
