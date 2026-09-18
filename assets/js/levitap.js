@@ -304,11 +304,11 @@
           scrollGoal = Math.min(max, Math.max(0, scrollGoal));
           // Safari races its main thread against its scrolling thread when a
           // page is scrolled every frame, and can be left hit-testing at a
-          // stale offset. So ask at most every 100 ms, and only once the last
+          // stale offset. So ask at most every 40 ms, and only once the last
           // ask has landed.
           const landed = scrollSent < 0 || Math.abs(window.scrollY - scrollSent) < 2;
           const goal = Math.round(scrollGoal);
-          if (landed && now - scrollAt >= 100 && Math.abs(goal - window.scrollY) >= 4) {
+          if (landed && now - scrollAt >= 40 && Math.abs(goal - window.scrollY) >= 4) {
             window.scrollTo(0, goal);
             scrollSent = goal; scrollAt = now;
           }
