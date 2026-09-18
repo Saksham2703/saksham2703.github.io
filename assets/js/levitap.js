@@ -40,6 +40,22 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (st.on || st.loading)) stop(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && st.on) stop(); });
 
+  // Hand control survives navigation within the site: an internal link sets a
+  // one-shot flag that the next page consumes to start again without asking.
+  // An off-site link opens a new tab, so this page switches it off instead.
+  const CARRY = 'levitap-carry';
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a || !st.on || e.defaultPrevented) return;
+    const internal = a.origin === location.origin && !a.target;
+    if (internal) sessionStorage.setItem(CARRY, '1');
+    else stop();
+  });
+  if (sessionStorage.getItem(CARRY)) {
+    sessionStorage.removeItem(CARRY);
+    start();
+  }
+
   // ---- consent ------------------------------------------------------------
 
   let box = null;
