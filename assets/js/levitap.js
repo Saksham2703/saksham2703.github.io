@@ -308,10 +308,12 @@
           // ask has landed.
           // The ack can sit stale on a busy main thread, so it times out.
           const landed = scrollSent < 0 || Math.abs(window.scrollY - scrollSent) < 2 || now - scrollAt >= 150;
-          const goal = Math.round(scrollGoal);
-          if (landed && now - scrollAt >= 40 && Math.abs(goal - window.scrollY) >= 4) {
-            window.scrollTo(0, goal);
-            scrollSent = goal; scrollAt = now;
+          // Each tick eases halfway to the goal so the steps read as a glide.
+          const gap = scrollGoal - window.scrollY;
+          if (landed && now - scrollAt >= 40 && Math.abs(gap) >= 4) {
+            const next = Math.round(window.scrollY + gap * 0.5);
+            window.scrollTo(0, next);
+            scrollSent = next; scrollAt = now;
           }
         }
         scrollAnchor = h.anchor.y;
