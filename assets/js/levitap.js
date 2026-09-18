@@ -306,7 +306,8 @@
           // page is scrolled every frame, and can be left hit-testing at a
           // stale offset. So ask at most every 40 ms, and only once the last
           // ask has landed.
-          const landed = scrollSent < 0 || Math.abs(window.scrollY - scrollSent) < 2;
+          // The ack can sit stale on a busy main thread, so it times out.
+          const landed = scrollSent < 0 || Math.abs(window.scrollY - scrollSent) < 2 || now - scrollAt >= 150;
           const goal = Math.round(scrollGoal);
           if (landed && now - scrollAt >= 40 && Math.abs(goal - window.scrollY) >= 4) {
             window.scrollTo(0, goal);
