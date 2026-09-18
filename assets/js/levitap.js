@@ -247,7 +247,14 @@
       if (pinching && !wasPinching && target) {
         pointer('pointerdown', target);
         target.focus?.({ preventScroll: true });
-        target.click();
+        if (target.matches('a[target="_blank"]')) {
+          // A synthetic click can't open a new tab (browsers treat it as a
+          // popup and block it), so off-site links are followed in this tab.
+          stop();
+          location.href = target.href;
+        } else {
+          target.click();
+        }
       }
       if (!pinching && wasPinching) pointer('pointerup', document);
 
