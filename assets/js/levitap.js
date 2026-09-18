@@ -18,8 +18,7 @@
   // landmarks, so it doesn't change with distance from the camera or hand tilt.
   const PINCH_ON = 0.035;    // below = pinch
   const PINCH_OFF = 0.05;    // above = release (hysteresis)
-  const PINCH_FREEZE = 0.07;  // below = fingers closing, cursor locks in place
-  const LOOKBACK_MS = 250;    // on freeze, rewind the cursor to where it was this long ago
+  const PINCH_FREEZE = 0.055; // below = fingers closing, cursor locks in place
   const SMOOTH = 0.35;      // cursor EMA factor per frame
   const BAND = [0.2, 0.8];  // fraction of the frame mapped to the full viewport
   const SCROLL_GAIN = 2.5;  // viewport heights scrolled per frame height of hand travel
@@ -209,8 +208,6 @@
     let pinching = false;
     let scrollAnchor = null;
     let hover = null;
-    let frozen = false;
-    const trail = []; // recent cursor positions, so a click lands where you aimed before the hand dipped
     const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
       clientX: cur.x, clientY: cur.y, button: 0, bubbles: type !== 'pointerenter' && type !== 'pointerleave'
     }));
@@ -235,7 +232,7 @@
         cursor.classList.add('lost');
         if (pinching) pointer('pointerup', document);
         if (hover) { pointer('pointerleave', hover); hover = st.hover = null; }
-        pinching = false; scrollAnchor = null; frozen = false; trail.length = 0;
+        pinching = false; scrollAnchor = null;
         return;
       }
       cursor.classList.remove('lost');
@@ -244,7 +241,7 @@
       if (paused) {
         if (pinching) pointer('pointerup', document);
         if (hover) { pointer('pointerleave', hover); hover = st.hover = null; }
-        pinching = false; scrollAnchor = null; frozen = false; trail.length = 0;
+        pinching = false; scrollAnchor = null;
         return;
       }
       const h = readHand(lm, res.worldLandmarks && res.worldLandmarks[0]);
@@ -252,23 +249,11 @@
       // Cursor follows the index knuckle, and freezes as soon as the thumb
       // starts closing in so the pinch itself can't drag it off target.
       // The preview is mirrored, so flip x.
-      const now = performance.now();
-      const wasFrozen = frozen;
-      frozen = pinching || h.pinch < PINCH_FREEZE;
-      if (!frozen) {
+      if (h.pinch >= PINCH_FREEZE && !pinching) {
         const tx = band(1 - h.point.x) * window.innerWidth;
         const ty = band(h.point.y) * window.innerHeight;
         cur.x += (tx - cur.x) * SMOOTH;
         cur.y += (ty - cur.y) * SMOOTH;
-        trail.push({ t: now, x: cur.x, y: cur.y });
-        while (trail.length > 1 && trail[1].t < now - LOOKBACK_MS) trail.shift();
-        cursor.style.transform = `translate(${cur.x}px, ${cur.y}px)`;
-        pointer('pointermove', document);
-      } else if (!wasFrozen && trail.length) {
-        // Fingers just started closing: the hand tends to dip as it pinches,
-        // so snap back to where the cursor was before the motion began.
-        const past = trail[0];
-        cur.x = past.x; cur.y = past.y;
         cursor.style.transform = `translate(${cur.x}px, ${cur.y}px)`;
         pointer('pointermove', document);
       }
