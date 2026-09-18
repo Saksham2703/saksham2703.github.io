@@ -207,7 +207,7 @@
     const cur = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let pinching = false;
     let scrollAnchor = null;
-    let scrollDebt = 0; // fractional pixels carried over: Safari's hit-testing desyncs on fractional scrolls
+    let scrollGoal = 0; // where the gesture wants the page; reached via smooth scrolling
     let hover = null;
     const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
       clientX: cur.x, clientY: cur.y, button: 0, bubbles: type !== 'pointerenter' && type !== 'pointerleave'
@@ -294,10 +294,15 @@
       const twoUp = !pinching && h.index && h.middle && !h.ring && !h.pinky;
       cursor.classList.toggle('scroll', twoUp);
       if (twoUp) {
-        if (scrollAnchor !== null) {
-          scrollDebt += (scrollAnchor - h.anchor.y) * window.innerHeight * SCROLL_GAIN;
-          const whole = Math.trunc(scrollDebt);
-          if (whole) { window.scrollBy(0, whole); scrollDebt -= whole; }
+        if (scrollAnchor === null) scrollGoal = window.scrollY;
+        else {
+          // Smooth scrolling runs on Safari's scrolling thread like a wheel
+          // scroll does; instant per-frame scrollBy left its paint out of sync
+          // with layout until the next manual scroll.
+          scrollGoal += (scrollAnchor - h.anchor.y) * window.innerHeight * SCROLL_GAIN;
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          scrollGoal = Math.min(max, Math.max(0, scrollGoal));
+          if (Math.abs(scrollGoal - window.scrollY) >= 4) window.scrollTo({ top: Math.round(scrollGoal), behavior: 'smooth' });
         }
         scrollAnchor = h.anchor.y;
       } else {
