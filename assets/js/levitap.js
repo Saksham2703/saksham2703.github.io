@@ -207,7 +207,9 @@
     const cur = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     let pinching = false;
     let scrollAnchor = null;
-    let scrollGoal = 0; // where the gesture wants the page; reached via smooth scrolling
+    let scrollGoal = 0;     // where the gesture wants the page
+    let scrollSent = -1;    // last position asked for, so a new one waits for the ack
+    let scrollAt = 0;       // time of that ask
     let hover = null;
     const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
       clientX: cur.x, clientY: cur.y, button: 0, bubbles: type !== 'pointerenter' && type !== 'pointerleave'
@@ -237,6 +239,7 @@
         return;
       }
       cursor.classList.remove('lost');
+      const now = performance.now();
       const paused = performance.now() - lastMouse < MOUSE_HOLD_MS;
       cursor.classList.toggle('paused', paused);
       if (paused) {
@@ -294,15 +297,21 @@
       const twoUp = !pinching && h.index && h.middle && !h.ring && !h.pinky;
       cursor.classList.toggle('scroll', twoUp);
       if (twoUp) {
-        if (scrollAnchor === null) scrollGoal = window.scrollY;
+        if (scrollAnchor === null) { scrollGoal = window.scrollY; scrollSent = -1; }
         else {
-          // Smooth scrolling runs on Safari's scrolling thread like a wheel
-          // scroll does; instant per-frame scrollBy left its paint out of sync
-          // with layout until the next manual scroll.
           scrollGoal += (scrollAnchor - h.anchor.y) * window.innerHeight * SCROLL_GAIN;
           const max = document.documentElement.scrollHeight - window.innerHeight;
           scrollGoal = Math.min(max, Math.max(0, scrollGoal));
-          if (Math.abs(scrollGoal - window.scrollY) >= 4) window.scrollTo({ top: Math.round(scrollGoal), behavior: 'smooth' });
+          // Safari races its main thread against its scrolling thread when a
+          // page is scrolled every frame, and can be left hit-testing at a
+          // stale offset. So ask at most every 100 ms, and only once the last
+          // ask has landed.
+          const landed = scrollSent < 0 || Math.abs(window.scrollY - scrollSent) < 2;
+          const goal = Math.round(scrollGoal);
+          if (landed && now - scrollAt >= 100 && Math.abs(goal - window.scrollY) >= 4) {
+            window.scrollTo(0, goal);
+            scrollSent = goal; scrollAt = now;
+          }
         }
         scrollAnchor = h.anchor.y;
       } else {
