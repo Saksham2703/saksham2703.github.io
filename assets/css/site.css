@@ -210,6 +210,7 @@ button.handbtn.on .dot{background:var(--accent)}
 }
 #levitap-cursor.over{width:30px; height:30px; margin:-15px 0 0 -15px}
 #levitap-cursor.pinch{background:var(--accent)}
+#levitap-cursor.click{box-shadow:0 0 0 10px rgba(43,101,85,.3)}
 #levitap-cursor.scroll{border-style:dashed}
 #levitap-cursor.lost{opacity:.25}
 #levitap-consent{

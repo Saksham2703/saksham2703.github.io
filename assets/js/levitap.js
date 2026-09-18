@@ -14,9 +14,11 @@
   // Thresholds. Detection/tracking confidences are the ones from the original
   // Python build (0.8/0.8), which is what stopped false positives there.
   const CONF = 0.8;
-  const PINCH_ON = 0.35;    // thumb-index gap / hand size, below = pinch
-  const PINCH_OFF = 0.5;    // above = release (hysteresis)
-  const PINCH_FREEZE = 0.5; // below = fingers closing, cursor locks in place
+  // Pinch is the thumb-tip to index-tip gap in metres, from MediaPipe's world
+  // landmarks, so it doesn't change with distance from the camera or hand tilt.
+  const PINCH_ON = 0.035;    // below = pinch
+  const PINCH_OFF = 0.05;    // above = release (hysteresis)
+  const PINCH_FREEZE = 0.055; // below = fingers closing, cursor locks in place
   const SMOOTH = 0.35;      // cursor EMA factor per frame
   const BAND = [0.2, 0.8];  // fraction of the frame mapped to the full viewport
   const SCROLL_GAIN = 2.5;  // viewport heights scrolled per frame height of hand travel
@@ -176,14 +178,16 @@
   // its PIP joint, which holds for any hand orientation the camera will see.
   // The cursor is driven by the index knuckle (MCP), not the fingertip: the
   // knuckle barely moves when you pinch, so the click lands where you aimed.
-  function readHand(lm) {
+  function readHand(lm, world) {
     const wrist = lm[0];
-    const size = dist(wrist, lm[9]) || 1e-6;          // wrist to middle MCP
     const ext = (tip, pip) => dist(lm[tip], wrist) > dist(lm[pip], wrist) * 1.1;
+    const pinch = world
+      ? Math.hypot(world[4].x - world[8].x, world[4].y - world[8].y, world[4].z - world[8].z)
+      : dist(lm[4], lm[8]) / (dist(wrist, lm[9]) || 1e-6) * 0.1; // ~palm length in metres
     return {
       point: lm[5],
       anchor: lm[9],
-      pinch: dist(lm[4], lm[8]) / size,
+      pinch,
       index: ext(8, 6), middle: ext(12, 10), ring: ext(16, 14), pinky: ext(20, 18)
     };
   }
@@ -215,7 +219,7 @@
         return;
       }
       cursor.classList.remove('lost');
-      const h = readHand(lm);
+      const h = readHand(lm, res.worldLandmarks && res.worldLandmarks[0]);
 
       // Cursor follows the index knuckle, and freezes as soon as the thumb
       // starts closing in so the pinch itself can't drag it off target.
@@ -247,6 +251,8 @@
       if (pinching && !wasPinching && target) {
         pointer('pointerdown', target);
         target.focus?.({ preventScroll: true });
+        cursor.classList.add('click');
+        setTimeout(() => cursor.classList.remove('click'), 200);
         if (target.matches('a[target="_blank"]')) {
           // A synthetic click can't open a new tab (browsers treat it as a
           // popup and block it), so off-site links are followed in this tab.
