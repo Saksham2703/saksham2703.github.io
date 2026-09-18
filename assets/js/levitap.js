@@ -208,8 +208,7 @@
     let pinching = false;
     let scrollAnchor = null;
     let scrollGoal = 0;     // where the gesture wants the page
-    let scrollSent = -1;    // last position asked for, so a new one waits for the ack
-    let scrollAt = 0;       // time of that ask
+    let scrollAt = 0;       // time of the last scroll request
     let hover = null;
     const pointer = (type, el) => el.dispatchEvent(new PointerEvent(type, {
       clientX: cur.x, clientY: cur.y, button: 0, bubbles: type !== 'pointerenter' && type !== 'pointerleave'
@@ -297,23 +296,19 @@
       const twoUp = !pinching && h.index && h.middle && !h.ring && !h.pinky;
       cursor.classList.toggle('scroll', twoUp);
       if (twoUp) {
-        if (scrollAnchor === null) { scrollGoal = window.scrollY; scrollSent = -1; }
+        if (scrollAnchor === null) scrollGoal = window.scrollY;
         else {
           scrollGoal += (scrollAnchor - h.anchor.y) * window.innerHeight * SCROLL_GAIN;
           const max = document.documentElement.scrollHeight - window.innerHeight;
           scrollGoal = Math.min(max, Math.max(0, scrollGoal));
           // Safari races its main thread against its scrolling thread when a
           // page is scrolled every frame, and can be left hit-testing at a
-          // stale offset. So ask at most every 40 ms, and only once the last
-          // ask has landed.
-          // The ack can sit stale on a busy main thread, so it times out.
-          const landed = scrollSent < 0 || Math.abs(window.scrollY - scrollSent) < 2 || now - scrollAt >= 150;
-          // Each tick eases halfway to the goal so the steps read as a glide.
+          // stale offset. So ask at most every 40 ms, each tick easing halfway
+          // to the goal so the steps read as a glide.
           const gap = scrollGoal - window.scrollY;
-          if (landed && now - scrollAt >= 40 && Math.abs(gap) >= 4) {
-            const next = Math.round(window.scrollY + gap * 0.5);
-            window.scrollTo(0, next);
-            scrollSent = next; scrollAt = now;
+          if (now - scrollAt >= 40 && Math.abs(gap) >= 4) {
+            window.scrollTo(0, Math.round(window.scrollY + gap * 0.5));
+            scrollAt = now;
           }
         }
         scrollAnchor = h.anchor.y;
