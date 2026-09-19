@@ -1,8 +1,7 @@
 <noscript><style>.cell,.hint{display:none}.hero--cell{grid-template-columns:1fr}</style></noscript>
 <div class="cell" data-cell aria-hidden="true">
-  <canvas data-gripper-canvas></canvas>
   <div class="celltag">
-    <span>sim · 2-link planar arm · parallel jaw</span>
+    <span>dock · xy gantry · parallel jaw</span>
     <span data-cell-state>idle</span>
   </div>
 </div>
@@ -19,6 +18,7 @@
   }
   if (window.HTMLScriptElement && HTMLScriptElement.supports && !HTMLScriptElement.supports('importmap')) { degrade(); return; }
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches) { degrade(); return; }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { degrade(); return; }
   function load() {
     var s = document.createElement('script');
     s.type = 'module';

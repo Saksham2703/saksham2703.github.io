@@ -1,126 +1,105 @@
 import * as THREE from 'three';
-import { L1, L2, MAX_EXT, solveIK, forward, bezier, easeInOut, damp } from './gripper-ik.js';
+import { bezier, easeInOut, damp } from './gripper-ik.js';
+
+// An XY gantry drawn over the whole page: a rail along the top edge of the viewport, a carriage
+// that slides along it, and a telescoping column that lowers a parallel-jaw gripper to the cursor
+// or to whatever link is hovered. The hero cell is the dock it parks in.
 
 const cell = document.querySelector('[data-cell]');
-const canvas = cell && cell.querySelector('[data-gripper-canvas]');
-if (!canvas) throw new Error('gripper: no cell');
+if (!cell) throw new Error('gripper: no cell');
 const stateEl = cell.querySelector('[data-cell-state]');
-
-// ---------- constants ----------
-const FLOOR_Y = 0.9;                  // lifts the rig clear of the caption strip
-// jaw = centre-to-centre finger spacing; fingers are FINGER_W wide, so closed means touching.
-const FINGER_W = 0.18;
-const JAW = { closed: FINGER_W + 0.02, relaxed: 0.35, open: 0.85 };
-// radius from the wrist origin to the farthest finger corner (tip plane 0.725 + 0.35, lateral spread at JAW.open, half-depth 0.2)
-const TOOL_R = Math.hypot(JAW.open / 2 + FINGER_W / 2, 0.725 + 0.35, 0.2);
-const ENVELOPE = MAX_EXT + TOOL_R;    // farthest any geometry gets from the shoulder
-const FRAME_PAD = 1.02;               // geometry near the reach limit sits at z ≤ +0.25, so it is magnified ~1% vs the z = 0 plane
-// Page links sit left of the cell, so the shoulder is offset right and the frame is just wide enough
-// for the arm to lie fully straight toward the left edge (the fingers may touch the edge); straight
-// right it clips. The shoulder sits on a column at mid-frame height (see resize) so it can reach
-// down as well as up.
-const SHOULDER_X = 0.15 * MAX_EXT;
-const SCENE_W = 2 * (MAX_EXT + SHOULDER_X) + 0.5;                     // min visible width; aims are clamped to the frame (frameClamp)
-const MIN_VIS_H = 1.5 * ENVELOPE * FRAME_PAD;                         // min visible height
-let SHOULDER_Y = MIN_VIS_H / 2 - FLOOR_Y;                             // shoulder height above the floor; set by resize()
-const BASE_H = 0.25;
-const REST = { t1: THREE.MathUtils.degToRad(100), t2: THREE.MathUtils.degToRad(-70) };
-const COLORS = {
-  body: 0xefebe0, joint: 0xd9d2c0, edge: 0x8b8577, path: 0x2b6555,
-};
-
-// ---------- renderer, camera, lights ----------
-let renderer;
-try {
-  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
-} catch (err) {
-  // No WebGL: undo what the loader did and fall back to the single-column hero.
+function degrade() {
   cell.hidden = true;
   const hero = cell.closest('.hero');
   if (hero) hero.classList.add('hero--solo');
   const hint = document.querySelector('[data-hint]');
   if (hint) hint.hidden = true;
+}
+
+// ---------- geometry, in CSS px; scene x = client x, scene y = -client y ----------
+const RAIL_H = 10;
+const CARRIAGE = { w: 58, h: 26 };
+const COL_TOP = RAIL_H - 4 + CARRIAGE.h;      // client y where the column leaves the carriage
+const COL_W = [16, 12, 9];                    // telescoping stages, outer to inner
+const COL_OV = 14;                            // overlap kept between extended stages
+const WRIST_R = 12;
+const PALM = { w: 78, h: 14 };
+const FINGER = { w: 10, len: 34, d: 6 };
+const TIP = 4 + PALM.h + FINGER.len;          // wrist centre → fingertip
+const MIN_TIP = COL_TOP + TIP;                // fingertip when fully retracted
+const JAW = { closed: FINGER.w + 2, relaxed: 30, open: 64 };
+const HOVER = 26;                             // fingertips ride this far above the cursor
+const EDGE = PALM.w / 2 + 6;                  // keep the palm inside the viewport
+const COLORS = { body: 0xefebe0, joint: 0xd9d2c0, edge: 0x8b8577, path: 0x2b6555 };
+
+// ---------- renderer, camera, lights ----------
+const canvas = document.createElement('canvas');
+canvas.className = 'arm';
+canvas.setAttribute('aria-hidden', 'true');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+} catch (err) {
+  degrade();
   throw err;
 }
+document.body.appendChild(canvas);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 100);
+const camera = new THREE.OrthographicCamera(0, 1, 0, -1, 0.1, 200);
+camera.position.z = 100;
 scene.add(new THREE.HemisphereLight(0xfffaf0, 0xd9d2c0, 2.4));
 const sun = new THREE.DirectionalLight(0xffffff, 1.8);
 sun.position.set(-4, 8, 6);
 scene.add(sun);
 
-const rig = new THREE.Group();       // everything that stands on the floor
-rig.position.set(SHOULDER_X, FLOOR_Y, 0);
-scene.add(rig);
-
-let visW = SCENE_W, visH = SCENE_W; // visible scene width/height at z = 0; set by resize()
+let W = 1, H = 1, maxTip = MIN_TIP, stageLen = 1;
 function resize() {
-  const w = cell.clientWidth, h = cell.clientHeight;
-  if (!w || !h) return;
-  renderer.setSize(w, h, false);
-  const aspect = w / h;
-  camera.aspect = aspect;
-  visW = Math.max(SCENE_W, MIN_VIS_H * aspect);
-  visH = visW / aspect;
-  const dist = (visW / 2) / (aspect * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
-  camera.position.set(0, visH / 2, dist);
-  camera.lookAt(0, visH / 2, 0);
-  camera.far = dist + SCENE_W;
+  W = innerWidth; H = innerHeight;
+  renderer.setSize(W, H, false);
+  camera.right = W; camera.bottom = -H;
   camera.updateProjectionMatrix();
-  // keep the shoulder at the vertical centre of whatever frame the cell's aspect gives us
-  SHOULDER_Y = visH / 2 - FLOOR_Y;
-  shoulder.position.y = SHOULDER_Y;
-  pathLine.position.y = SHOULDER_Y;
-  pedestal.scale.y = SHOULDER_Y - BASE_H;
-  pedestal.position.y = BASE_H + (SHOULDER_Y - BASE_H) / 2;
+  rail.scale.x = W; rail.position.x = W / 2;
+  maxTip = Math.max(MIN_TIP, H - 6);
+  stageLen = (maxTip - MIN_TIP) / COL_W.length;
 }
 
-// ---------- materials ----------
+// ---------- materials, parts ----------
 const bodyMat = new THREE.MeshStandardMaterial({ color: COLORS.body, roughness: 0.92, metalness: 0 });
 const jointMat = new THREE.MeshStandardMaterial({ color: COLORS.joint, roughness: 0.92, metalness: 0 });
 const edgeMat = new THREE.LineBasicMaterial({ color: COLORS.edge, transparent: true, opacity: 0.7 });
-
-function part(geom, mat, x = 0, y = 0, z = 0, rz = 0, edges = new THREE.EdgesGeometry(geom, 20)) {
+function part(geom, mat, x = 0, y = 0, z = 0, edges = new THREE.EdgesGeometry(geom, 20)) {
   const g = new THREE.Group();
   const m = new THREE.Mesh(geom, mat);
   m.add(new THREE.LineSegments(edges, edgeMat));
   g.add(m);
   g.position.set(x, y, z);
-  g.rotation.z = rz;
   return g;
 }
 const cyl = (r, h) => new THREE.CylinderGeometry(r, r, h, 24);
 const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
 
-// ---------- the arm: base → shoulder → link1 → elbow → link2 → wrist → palm → fingers ----------
-const base = part(cyl(0.9, BASE_H), jointMat, 0, BASE_H / 2);
-rig.add(base);
-const pedestal = part(box(0.7, 1, 0.7), bodyMat, 0, BASE_H + 0.5);   // unit height; resize() stretches it to the shoulder
-rig.add(pedestal);
+// ---------- rail → carriage → column stages → wrist → palm → fingers ----------
+const rail = part(box(1, RAIL_H, 6), jointMat, 0, -RAIL_H / 2, 0);   // unit width; resize() stretches it
+scene.add(rail);
 
-const shoulder = new THREE.Group();
-shoulder.position.set(0, SHOULDER_Y, 0);
-rig.add(shoulder);
-// joint cylinders lie along z so their round face looks at the viewer
-shoulder.add(part(cyl(0.35, 0.6), jointMat).rotateX(Math.PI / 2));
-shoulder.add(part(box(0.45, L1, 0.45), bodyMat, 0, L1 / 2));
-
-const elbow = new THREE.Group();
-elbow.position.set(0, L1, 0);
-shoulder.add(elbow);
-elbow.add(part(cyl(0.3, 0.55), jointMat).rotateX(Math.PI / 2));
-elbow.add(part(box(0.38, L2, 0.38), bodyMat, 0, L2 / 2));
+const car = new THREE.Group();
+scene.add(car);
+// wheels lie along z so their round face looks at the viewer
+car.add(part(box(CARRIAGE.w, CARRIAGE.h, 6), bodyMat, 0, -(RAIL_H - 4 + CARRIAGE.h / 2), 8));
+car.add(part(cyl(6, 6), jointMat, -19, -7, 16).rotateX(Math.PI / 2));
+car.add(part(cyl(6, 6), jointMat, 19, -7, 16).rotateX(Math.PI / 2));
+const stages = COL_W.map((w, i) => { const g = part(box(w, 1, 6), bodyMat, 0, 0, 24 + 8 * i); car.add(g); return g; });
 
 const wrist = new THREE.Group();
-wrist.position.set(0, L2, 0);
-elbow.add(wrist);
-wrist.add(part(cyl(0.28, 0.5), jointMat).rotateX(Math.PI / 2));
-wrist.add(part(box(1.1, 0.35, 0.5), bodyMat, 0, 0.2));
-const fingerGeom = box(FINGER_W, 0.7, 0.4);
+car.add(wrist);
+wrist.add(part(box(PALM.w, PALM.h, 6), bodyMat, 0, -(4 + PALM.h / 2), 48));
+wrist.add(part(cyl(WRIST_R, 6), jointMat, 0, 0, 56).rotateX(Math.PI / 2));
+const fingerGeom = box(FINGER.w, FINGER.len, FINGER.d);
 const fingerEdges = new THREE.EdgesGeometry(fingerGeom, 20);
-const fingerL = part(fingerGeom, bodyMat, 0, 0.725, 0, 0, fingerEdges);
-const fingerR = part(fingerGeom, bodyMat, 0, 0.725, 0, 0, fingerEdges);
+const fingerY = -(4 + PALM.h + FINGER.len / 2);
+const fingerL = part(fingerGeom, bodyMat, 0, fingerY, 56, fingerEdges);
+const fingerR = part(fingerGeom, bodyMat, 0, fingerY, 56, fingerEdges);
 wrist.add(fingerL, fingerR);
 
 // ---------- trajectory line ----------
@@ -131,36 +110,31 @@ const pathGeom = new THREE.BufferGeometry();
 const pathPos = new THREE.BufferAttribute(new Float32Array(PATH_N * 3), 3);
 pathPos.setUsage(THREE.DynamicDrawUsage);
 pathGeom.setAttribute('position', pathPos);
-const pathMat = new THREE.LineDashedMaterial({ color: COLORS.path, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0 });
+const pathMat = new THREE.LineDashedMaterial({ color: COLORS.path, dashSize: 9, gapSize: 6, transparent: true, opacity: 0 });
 const pathLine = new THREE.Line(pathGeom, pathMat);
 pathLine.frustumCulled = false;
-pathLine.position.y = SHOULDER_Y;
-rig.add(pathLine);
+scene.add(pathLine);
 
-// ---------- pose application ----------
-// Links are modelled along +y, so a shoulder angle of t1 (from +x) is a z-rotation of t1 - 90°.
-function applyPose(t1, t2, wristRel, jaw) {
-  shoulder.rotation.z = t1 - Math.PI / 2;
-  elbow.rotation.z = t2;
-  wrist.rotation.z = wristRel;
+// ---------- pose application: x = carriage, y = fingertip client y, jaw = finger spacing ----------
+function applyPose(x, y, jaw) {
+  car.position.x = x;
+  const drop = y - MIN_TIP;
+  wrist.position.y = -(COL_TOP + drop);
+  stages.forEach((g, i) => {
+    const bot = Math.min(drop, (i + 1) * stageLen);
+    const top = Math.max(i * stageLen - COL_OV, bot - stageLen);
+    const len = bot - top;
+    g.visible = len > 0.5;
+    g.position.y = -(COL_TOP + (top + bot) / 2);
+    g.scale.y = Math.max(len, 0.01);
+  });
   fingerL.position.x = -jaw / 2;
   fingerR.position.x = jaw / 2;
 }
 
-// ---------- coordinate mapping (client px → scene units, shoulder-relative) ----------
-function toScene(cx, cy) {
-  const r = canvas.getBoundingClientRect();
-  const x = ((cx - r.left) / r.width) * visW - visW / 2 - SHOULDER_X;
-  const y = ((r.bottom - cy) / r.height) * visH - FLOOR_Y - SHOULDER_Y;
-  return { x, y };
-}
-// Keep every aim inside the visible frame (shoulder-relative), with room for the tool, so a target
-// past the cell edge pulls the arm toward the edge instead of out of view.
-const FRAME_M = 0.3;
-function frameClamp(p) {
-  const x = Math.min(visW / 2 - SHOULDER_X - FRAME_M, Math.max(-visW / 2 - SHOULDER_X + FRAME_M, p.x));
-  const y = Math.min(visH - FLOOR_Y - SHOULDER_Y - FRAME_M, Math.max(-FLOOR_Y - SHOULDER_Y + FRAME_M, p.y));
-  return { x, y };
+// ---------- reach ----------
+function clampAim(p) {
+  return { x: Math.min(W - EDGE, Math.max(EDGE, p.x)), y: Math.min(maxTip, Math.max(MIN_TIP, p.y)) };
 }
 
 // ---------- state ----------
@@ -168,39 +142,33 @@ const S = { IDLE: 'idle', TRACKING: 'tracking', PLANNING: 'planning', REACHING: 
 let state = S.IDLE;
 function setState(s) { if (s === state) return; state = s; if (stateEl) stateEl.textContent = s; }
 
-const cur = { t1: REST.t1, t2: REST.t2, w: 0, jaw: JAW.relaxed };
-const goal = { t1: REST.t1, t2: REST.t2, w: 0, jaw: JAW.relaxed };
+const cur = { x: 0, y: MIN_TIP, jaw: JAW.relaxed };
+const goal = { x: 0, y: MIN_TIP, jaw: JAW.relaxed };
 let lambda = 8;             // smoothing rate: 8 tracking, 5 settling to rest, 14 reach, 30 grasp
-let elbowSign = -1;
-let cursor = null;          // last cursor in shoulder-relative scene units, or null when off-page
+let cursor = null;          // last fingertip aim for the cursor, or null when off-page
 let sleeping = false;       // stillness timer fired; stop the loop once converged
 let stillTimer = 0;
 const STILL_MS = 2000;
 
-const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));      // into (-π, π]
-const nearest = (a, ref) => ref + wrap(a - ref);               // equivalent of a closest to ref, so damping never takes the long way round
+function aimAt(p) { p = clampAim(p); goal.x = p.x; goal.y = p.y; return p; }
 
-function aimAt(p) {
-  // hysteresis on the elbow side so a cursor near x = 0 does not flap;
-  // while a target is committed (PLANNING/REACHING/GRASP) the sign holds instead
-  p = frameClamp(p);
-  if (!target) { if (p.x > 0.4) elbowSign = -1; else if (p.x < -0.4) elbowSign = 1; }
-  const ik = solveIK(p.x, p.y, elbowSign);
-  goal.t1 = ik.t1; goal.t2 = ik.t2;
-  // jaws face the bearing to the target: absolute palm angle = bearing, so wrist relative = bearing - (t1 + t2)
-  goal.w = wrap(Math.atan2(ik.y, ik.x) - (ik.t1 + ik.t2));
-  return ik;
+// Rest: park in the hero cell while it is on screen, otherwise retract to the rail. The bay is
+// entered a quarter of the way in so the column clears the nav links above it.
+function dockPoint() {
+  if (cell.hidden) return null;
+  const r = cell.getBoundingClientRect();
+  const c = { x: r.left + r.width / 4, y: r.top + r.height / 2 };
+  return r.width && c.y > MIN_TIP + 60 && c.y < H - 60 ? c : null;
 }
-
 function restPose() {
-  goal.t1 = REST.t1; goal.t2 = REST.t2; goal.w = 0; goal.jaw = JAW.relaxed;
+  const d = dockPoint();
+  if (d) aimAt(d); else goal.y = MIN_TIP;
+  goal.jaw = JAW.relaxed;
 }
-
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // ---------- planning / reaching / grasp ----------
 const PLAN_MS = 120, REACH_MS = 350, FADE_MS = 200, PULSE_MS = 150, PATH_ALPHA = 0.85;
-let target = null;      // shoulder-relative scene point of the hovered element (clamped to reach)
+let target = null;      // fingertip aim on the hovered element (clamped to the viewport)
 let targetEl = null;    // the element being targeted, so focus after pointerenter does not re-plan
 let path = null;        // { p0, p1, p2 }
 let clock = 0;          // ms elapsed in the current time-based state
@@ -208,38 +176,31 @@ let arrived = false;
 
 function elementPoint(el) {
   const r = el.getBoundingClientRect();
-  return toScene(r.left + r.width / 2, r.top + r.height / 2);
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 }
 function writePath() {
   const pos = pathGeom.attributes.position;
   for (let i = 0; i < PATH_N; i++) {
     const p = bezier(path.p0, path.p1, path.p2, i / (PATH_N - 1));
-    pos.setXYZ(i, p.x, p.y, 0.3);
+    pos.setXYZ(i, p.x, -p.y, 64);
   }
   pos.needsUpdate = true;
   pathLine.computeLineDistances();
 }
 function retarget(el) {
-  // elbowSign is committed by plan() and held for the whole reach; a resize must not flip it
-  const raw = frameClamp(elementPoint(el));
-  const ik = solveIK(raw.x, raw.y, elbowSign);
-  target = { x: ik.x, y: ik.y };               // clamped to the frame, then to reach along the bearing
-  const p0 = forward(cur.t1, cur.t2);
-  const dx = target.x - p0.x, dy = target.y - p0.y;
-  // control point: chord midpoint pushed 25% of the chord length along the
-  // perpendicular (-dy, dx), on the side that keeps the elbow up
-  const side = elbowSign < 0 ? 1 : -1;
-  const p1 = { x: (p0.x + target.x) / 2 - side * dy * 0.25, y: (p0.y + target.y) / 2 + side * dx * 0.25 };
-  path = { p0: { x: p0.x, y: p0.y }, p1, p2: target };
+  target = clampAim(elementPoint(el));
+  const p0 = { x: cur.x, y: cur.y };
+  // lift-and-place: the control point sits above the chord midpoint, never above the rail
+  const chord = Math.hypot(target.x - p0.x, target.y - p0.y);
+  const p1 = { x: (p0.x + target.x) / 2, y: Math.max(MIN_TIP, (p0.y + target.y) / 2 - chord * 0.3) };
+  path = { p0, p1, p2: target };
   writePath();
 }
 function plan(el) {
   if (targetEl === el) return;
   targetEl = el;
-  const raw = elementPoint(el);
-  elbowSign = raw.x > 0.4 ? -1 : raw.x < -0.4 ? 1 : elbowSign;
   retarget(el);
-  aimAt(path.p0); // hold position during the fade; if plan() flipped the elbow, that swing is spent here
+  aimAt(path.p0); // hold position during the fade
   clock = 0; arrived = false;
   setState(S.PLANNING);
   wake();
@@ -258,6 +219,13 @@ function grasp() {
   goal.jaw = JAW.closed; setState(S.GRASP); wake();
 }
 function ungrasp() { if (state === S.GRASP) { goal.jaw = arrived ? JAW.closed : JAW.open; setState(S.REACHING); wake(); } }
+// The page moved under a held target: re-plan from wherever the arm is now.
+function refreshTarget() {
+  if (!targetEl) return;
+  retarget(targetEl);
+  if (arrived) { aimAt(target); wake(); }
+  else if (state === S.REACHING || state === S.GRASP) { clock = 0; arrived = false; }
+}
 
 function step(dt) {
   const ms = dt * 1000;
@@ -282,21 +250,18 @@ function step(dt) {
 
 // ---------- loop ----------
 let running = false, last = 0;
-let visible = true;
 function converged() {
-  return Math.abs(wrap(goal.t1 - cur.t1)) < 1e-3 && Math.abs(wrap(goal.t2 - cur.t2)) < 1e-3 &&
-         Math.abs(wrap(goal.w - cur.w)) < 1e-3 && Math.abs(goal.jaw - cur.jaw) < 1e-3 &&
-         pathMat.opacity < 1e-3;
+  return Math.abs(goal.x - cur.x) < 0.05 && Math.abs(goal.y - cur.y) < 0.05 &&
+         Math.abs(goal.jaw - cur.jaw) < 0.05 && pathMat.opacity < 1e-3;
 }
 function tick(now) {
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000) || 0.016);
   last = now;
   step(dt);
-  cur.t1 = damp(cur.t1, nearest(goal.t1, cur.t1), lambda, dt);
-  cur.t2 = damp(cur.t2, nearest(goal.t2, cur.t2), lambda, dt);
-  cur.w = damp(cur.w, nearest(goal.w, cur.w), lambda, dt);
+  cur.x = damp(cur.x, goal.x, lambda, dt);
+  cur.y = damp(cur.y, goal.y, lambda, dt);
   cur.jaw = damp(cur.jaw, goal.jaw, state === S.GRASP ? 30 : lambda, dt);
-  applyPose(cur.t1, cur.t2, cur.w, cur.jaw);
+  applyPose(cur.x, cur.y, cur.jaw);
   renderer.render(scene, camera);
   const canStop = state === S.TRACKING || state === S.IDLE || ((state === S.REACHING || state === S.GRASP) && arrived);
   if (sleeping && canStop && converged()) {
@@ -307,15 +272,12 @@ function tick(now) {
     if (state !== S.IDLE && state !== S.GRASP) setState(S.IDLE);
     return;
   }
-  if (!visible) { running = false; return; }
   requestAnimationFrame(tick);
 }
 function start() {
-  if (!visible) return;
   if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick); }
 }
 function wake() {
-  if (!visible) return;
   sleeping = false;
   clearTimeout(stillTimer);
   stillTimer = setTimeout(() => { sleeping = true; }, STILL_MS);
@@ -329,56 +291,51 @@ function settle() {
 }
 
 // ---------- input ----------
-if (!reducedMotion) {
-  let px = 0, py = 0; // last client position, so a scroll can re-aim without a pointermove
-  const track = () => {
-    cursor = toScene(px, py);
-    if (!target && (state === S.IDLE || state === S.TRACKING)) { setState(S.TRACKING); lambda = 8; aimAt(cursor); goal.jaw = JAW.relaxed; }
-    wake();
-  };
-  document.addEventListener('pointermove', (e) => { px = e.clientX; py = e.clientY; track(); }, { passive: true });
-  addEventListener('scroll', () => { if (cursor) track(); }, { passive: true });
-  // pointerleave on <html> fires when the pointer exits the viewport;
-  // on document it does not fire reliably in every browser.
-  document.documentElement.addEventListener('pointerleave', () => {
-    cursor = null;
-    if (target) { release(targetEl); return; }
-    if (state === S.TRACKING || state === S.IDLE) { lambda = 5; restPose(); settle(); }
+let px = 0, py = 0; // last client position, so a scroll can re-aim without a pointermove
+const track = () => {
+  cursor = { x: px, y: py - HOVER };
+  if (!target && (state === S.IDLE || state === S.TRACKING)) { setState(S.TRACKING); lambda = 8; aimAt(cursor); goal.jaw = JAW.relaxed; }
+  wake();
+};
+document.addEventListener('pointermove', (e) => { px = e.clientX; py = e.clientY; track(); }, { passive: true });
+addEventListener('scroll', () => {
+  if (target) { refreshTarget(); wake(); }
+  else if (cursor) track();
+  else if (state === S.IDLE || state === S.TRACKING) { lambda = 5; restPose(); settle(); }
+}, { passive: true });
+// pointerleave on <html> fires when the pointer exits the viewport;
+// on document it does not fire reliably in every browser.
+document.documentElement.addEventListener('pointerleave', () => {
+  cursor = null;
+  if (target) { release(targetEl); return; }
+  if (state === S.TRACKING || state === S.IDLE) { lambda = 5; restPose(); settle(); }
+});
+document.addEventListener('pointerup', ungrasp);
+document.addEventListener('pointercancel', ungrasp);
+window.addEventListener('blur', ungrasp);
+
+document.querySelectorAll('a[href], button').forEach((el) => {
+  el.addEventListener('pointerenter', () => plan(el));
+  el.addEventListener('pointerleave', () => release(el));
+  el.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; grasp(); });
+  el.addEventListener('focus', () => plan(el));
+  el.addEventListener('blur', () => release(el));
+  el.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    if (e.key === 'Enter' || (e.key === ' ' && el.matches('button,[role="button"]'))) { grasp(); setTimeout(ungrasp, PULSE_MS); }
   });
-  document.addEventListener('pointerup', ungrasp);
-  document.addEventListener('pointercancel', ungrasp);
-  window.addEventListener('blur', ungrasp);
+});
 
-  document.querySelectorAll('[data-grasp]').forEach((el) => {
-    el.addEventListener('pointerenter', () => plan(el));
-    el.addEventListener('pointerleave', () => release(el));
-    el.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; grasp(); });
-    el.addEventListener('focus', () => plan(el));
-    el.addEventListener('blur', () => release(el));
-    el.addEventListener('keydown', (e) => {
-      if (e.repeat) return;
-      if (e.key === 'Enter' || (e.key === ' ' && el.matches('button,[role="button"]'))) { grasp(); setTimeout(ungrasp, PULSE_MS); }
-    });
-  });
-
-  // Pointer motion over a hero scrolled out of view must not restart an invisible loop.
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) start(); }).observe(cell);
-  }
-}
-
-// ---------- startup ----------
-applyPose(REST.t1, REST.t2, 0, JAW.relaxed);
-// The observer fires once on observe(), so the first frame is drawn at the real size.
-// While the loop runs, tick() renders; otherwise draw one frame here.
-new ResizeObserver(() => {
-  if (!cell.clientWidth || !cell.clientHeight) return;
+addEventListener('resize', () => {
   resize();
-  if (targetEl) {
-    retarget(targetEl);
-    if (arrived) { aimAt(target); wake(); }                       // parked (possibly IDLE): move to the new spot
-    else if (state === S.REACHING || state === S.GRASP) { clock = 0; arrived = false; } // mid-reach: restart from here
-  }
-  if (!running) renderer.render(scene, camera);
-}).observe(cell);
+  if (target) refreshTarget();
+  else if (!cursor) restPose();
+  if (!running) { applyPose(cur.x, cur.y, cur.jaw); renderer.render(scene, camera); }
+});
 
+// ---------- startup: begin parked in the dock ----------
+resize();
+restPose();
+cur.x = goal.x; cur.y = goal.y;
+applyPose(cur.x, cur.y, cur.jaw);
+renderer.render(scene, camera);

@@ -335,7 +335,7 @@ article.note table th,article.note table td{border-bottom:1px solid var(--line);
   background-size:26px 26px;
 }
 .cell[hidden]{display:none}
-.cell canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.arm{position:fixed; inset:0; width:100%; height:100%; display:block; pointer-events:none; z-index:9000}
 .celltag{
   position:absolute; left:0; right:0; bottom:0; z-index:2;
   display:flex; justify-content:space-between; align-items:baseline; gap:10px;
